@@ -1,0 +1,200 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="DevGuard.Views.AddCheckWindow"
+        Width="500"
+        Height="450"
+        MinWidth="450"
+        MinHeight="400"
+        Title="Add Check"
+        Background="#0B1120"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Styles>
+
+        <!-- Text -->
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily"
+                    Value="Inter, Segoe UI, sans-serif"/>
+            <Setter Property="Foreground"
+                    Value="#F8FAFC"/>
+        </Style>
+
+        <!-- Field labels -->
+        <Style Selector="TextBlock.field-label">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+        </Style>
+
+        <!-- Text input -->
+        <Style Selector="TextBox.field">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="Padding" Value="14,0"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center"/>
+        </Style>
+
+        <Style Selector="TextBox.field:focus">
+            <Setter Property="BorderBrush" Value="#3B82F6"/>
+        </Style>
+
+        <!-- Combo boxes -->
+        <Style Selector="ComboBox.field">
+            <Setter Property="Height" Value="44"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+
+        <!-- Buttons -->
+<Style Selector="Button.form-button">
+    <Setter Property="Height" Value="42"/>
+    <Setter Property="MinWidth" Value="100"/>
+    <Setter Property="Padding" Value="20,8"/>
+    <Setter Property="FontSize" Value="14"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="CornerRadius" Value="8"/>
+
+    <!-- Center button text -->
+    <Setter Property="HorizontalContentAlignment"
+            Value="Center"/>
+    <Setter Property="VerticalContentAlignment"
+            Value="Center"/>
+</Style>
+
+        <!-- Cancel -->
+        <Style Selector="Button.cancel">
+            <Setter Property="Background" Value="#172033"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style Selector="Button.cancel:pointerover">
+            <Setter Property="Background" Value="#1E2A3F"/>
+            <Setter Property="BorderBrush" Value="#3B82F6"/>
+        </Style>
+
+        <!-- Save -->
+        <Style Selector="Button.save">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style Selector="Button.save:pointerover">
+            <Setter Property="Background" Value="#3B82F6"/>
+        </Style>
+
+    </Window.Styles>
+
+    <Grid RowDefinitions="*,Auto"
+      Margin="30"
+      RowSpacing="20">
+
+    <!-- Scrollable form -->
+    <ScrollViewer Grid.Row="0"
+                  VerticalScrollBarVisibility="Auto"
+                  HorizontalScrollBarVisibility="Disabled">
+
+        <StackPanel Spacing="18">
+
+            <!-- Check -->
+            <StackPanel Spacing="6">
+                <TextBlock Text="Check"
+                           Classes="field-label"/>
+
+                <TextBox x:Name="TitleTextBox"
+                         Classes="field"
+                         Watermark="Enter checklist item..."/>
+            </StackPanel>
+
+
+            <!-- Category -->
+            <StackPanel Spacing="6">
+                <TextBlock Text="Category"
+                           Classes="field-label"/>
+
+                <ComboBox x:Name="CategoryComboBox"
+                          Classes="field">
+
+                    <ComboBoxItem Content="Understand"/>
+                    <ComboBoxItem Content="Development"/>
+                    <ComboBoxItem Content="Testing"/>
+                    <ComboBoxItem Content="Communication"/>
+                    <ComboBoxItem Content="PR"/>
+                    <ComboBoxItem Content="Merge"/>
+                    <ComboBoxItem Content="Deployment"/>
+                    <ComboBoxItem Content="Closure"/>
+
+                </ComboBox>
+            </StackPanel>
+
+
+            <!-- Priority -->
+            <StackPanel Spacing="6">
+                <TextBlock Text="Priority"
+                           Classes="field-label"/>
+
+                <ComboBox x:Name="PriorityComboBox"
+                          Classes="field">
+
+                    <ComboBoxItem Content="Critical"/>
+                    <ComboBoxItem Content="Required"/>
+                    <ComboBoxItem Content="Conditional"/>
+                    <ComboBoxItem Content="Review"/>
+
+                </ComboBox>
+            </StackPanel>
+
+
+            <!-- Notes -->
+            <StackPanel Spacing="6">
+
+                <TextBlock Text="Notes"
+                           Classes="field-label"/>
+
+                <TextBox x:Name="NotesTextBox"
+                         Classes="field"
+                         Height="120"
+                         Padding="14,10"
+                         Watermark="Add notes for this checklist item..."
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         VerticalContentAlignment="Top"/>
+
+            </StackPanel>
+
+        </StackPanel>
+
+    </ScrollViewer>
+
+
+    <!-- Fixed buttons -->
+    <StackPanel Grid.Row="1"
+                Orientation="Horizontal"
+                HorizontalAlignment="Right"
+                Spacing="10">
+
+        <Button Content="Cancel"
+                Classes="form-button cancel"
+                Click="Cancel_Click"/>
+
+        <Button Content="Save"
+                Classes="form-button save"
+                Click="Save_Click"/>
+
+    </StackPanel>
+
+</Grid>
+
+</Window>

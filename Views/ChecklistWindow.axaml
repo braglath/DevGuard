@@ -1,0 +1,309 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:models="using:DevGuard.Models"
+        x:Class="DevGuard.Views.ChecklistWindow"
+        Width="1100"
+        Height="800"
+        MinWidth="850"
+        MinHeight="650"
+        Title="DevGuard"
+        Background="#0B1120">
+
+    <Window.Styles>
+
+        <!-- Global -->
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily"
+                    Value="Inter, Segoe UI, sans-serif"/>
+            <Setter Property="Foreground"
+                    Value="#F8FAFC"/>
+        </Style>
+
+        <!-- Header -->
+        <Style Selector="TextBlock.page-title">
+            <Setter Property="FontSize" Value="24"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+        </Style>
+
+        <Style Selector="TextBlock.page-subtitle">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+        </Style>
+
+        <!-- Progress -->
+        <Style Selector="TextBlock.progress-text">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+        </Style>
+
+        <Style Selector="ProgressBar.progress">
+            <Setter Property="Height" Value="7"/>
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="#2563EB"/>
+        </Style>
+
+        <!-- Action buttons -->
+        <Style Selector="Button.action">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Padding" Value="16,8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Center"/>
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.action.secondary">
+            <Setter Property="Background" Value="#172033"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style Selector="Button.action.secondary:pointerover">
+            <Setter Property="Background" Value="#1E2A3F"/>
+            <Setter Property="BorderBrush" Value="#3B82F6"/>
+        </Style>
+
+        <Style Selector="Button.action.primary">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style Selector="Button.action.primary:pointerover">
+            <Setter Property="Background" Value="#3B82F6"/>
+        </Style>
+
+        <!-- Checklist item -->
+        <Style Selector="Border.check-item">
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="BorderBrush" Value="#263449"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style Selector="Border.check-item:pointerover">
+            <Setter Property="Background" Value="#172033"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+        </Style>
+
+        <!-- Checklist title -->
+        <Style Selector="TextBlock.check-title">
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+        </Style>
+
+        <!-- Priority -->
+        <Style Selector="TextBlock.priority">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+        </Style>
+
+        <!-- Icon buttons -->
+        <Style Selector="Button.icon">
+            <Setter Property="Width" Value="34"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="15"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="HorizontalContentAlignment"
+                    Value="Center"/>
+            <Setter Property="VerticalContentAlignment"
+                    Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.icon:pointerover">
+            <Setter Property="Background" Value="#1E2A3F"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+        </Style>
+
+        <Style Selector="Button.icon.delete:pointerover">
+            <Setter Property="Background" Value="#3F1D1D"/>
+            <Setter Property="Foreground" Value="#F87171"/>
+        </Style>
+
+        <!-- Completed -->
+        <Style Selector="Border.check-item.completed">
+            <Setter Property="Opacity" Value="0.55"/>
+        </Style>
+
+        <Style Selector="TextBlock.check-title.completed">
+            <Setter Property="TextDecorations" Value="Strikethrough"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+        </Style>
+
+<Style Selector="TextBlock.check-notes">
+    <Setter Property="FontSize" Value="12"/>
+    <Setter Property="LineHeight" Value="18"/>
+    <Setter Property="Foreground" Value="#94A3B8"/>
+    <Setter Property="TextWrapping" Value="Wrap"/>
+</Style>
+
+    </Window.Styles>
+
+
+    <Grid Margin="32"
+          RowDefinitions="Auto,Auto,*"
+          RowSpacing="24">
+
+        <!-- HEADER -->
+        <Grid Grid.Row="0"
+              ColumnDefinitions="*,Auto"
+              ColumnSpacing="30">
+
+            <StackPanel Grid.Column="0"
+                        Spacing="6">
+
+                <TextBlock x:Name="WorkflowTitle"
+                           Classes="page-title"/>
+
+                <TextBlock x:Name="WorkflowDescription"
+           Classes="page-subtitle"/>
+
+            </StackPanel>
+
+
+            <!-- Progress -->
+            <StackPanel Grid.Column="1"
+                        Width="220"
+                        Spacing="8"
+                        VerticalAlignment="Center">
+
+                <TextBlock x:Name="ProgressText"
+                           Classes="progress-text"
+                           HorizontalAlignment="Right"/>
+
+                <ProgressBar x:Name="ProgressBar"
+                             Classes="progress"
+                             Minimum="0"
+                             Maximum="100"/>
+
+            </StackPanel>
+
+        </Grid>
+
+
+        <!-- ACTION BAR -->
+        <Grid Grid.Row="1"
+              ColumnDefinitions="Auto,Auto,*,Auto"
+              ColumnSpacing="10">
+
+            <Button Grid.Column="0"
+                    Content="←  Change Workflow"
+                    Classes="action secondary"
+                    Click="ChangeWorkflow_Click"/>
+
+            <Button Grid.Column="1"
+                    Content="+  Add Check"
+                    Classes="action secondary"
+                    Click="AddCheck_Click"/>
+
+            <Border Grid.Column="2"/>
+
+            <Button Grid.Column="3"
+                    Content="✓  Complete"
+                    Classes="action primary"
+                    Click="Complete_Click"/>
+
+        </Grid>
+
+
+        <!-- CHECKLIST -->
+        <Border Grid.Row="2"
+                Background="#0F172A"
+                BorderBrush="#1E293B"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="18">
+
+            <ScrollViewer VerticalScrollBarVisibility="Auto">
+
+                <ItemsControl x:Name="ChecklistItems">
+
+                    <ItemsControl.ItemTemplate>
+
+                        <DataTemplate x:DataType="models:ChecklistItem">
+
+                            <Border Classes="check-item"
+                                    CornerRadius="8"
+                                    Padding="12"
+                                    Margin="0,0,0,10">
+
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                                      ColumnSpacing="12">
+
+                                    <!-- Checkbox -->
+                                    <CheckBox Grid.Column="0"
+                                              IsChecked="{Binding IsCompleted}"
+                                              Click="CheckBox_Click"
+                                              VerticalAlignment="Center"/>
+
+
+                                    <!-- Title + Priority -->
+                                    <StackPanel Grid.Column="1"
+            VerticalAlignment="Center"
+            Spacing="4">
+
+    <TextBlock Text="{Binding Title}"
+               Classes="check-title"/>
+
+    <TextBlock Text="{Binding Priority}"
+               Classes="priority"/>
+
+<ScrollViewer MaxHeight="90"
+              VerticalScrollBarVisibility="Auto"
+              HorizontalScrollBarVisibility="Disabled"
+              IsVisible="{Binding HasNotes}">
+
+    <TextBlock Text="{Binding Notes}"
+               Classes="check-notes"
+               TextWrapping="Wrap"/>
+
+</ScrollViewer>
+
+</StackPanel>
+
+
+                                    <!-- Edit -->
+                                    <Button Grid.Column="2"
+                                            Classes="icon"
+                                            Content="✏"
+                                            ToolTip.Tip="Edit"
+                                            Tag="{Binding}"
+                                            Click="EditCheck_Click"/>
+
+
+                                    <!-- Delete -->
+                                    <Button Grid.Column="3"
+                                            Classes="icon delete"
+                                            Content="🗑"
+                                            ToolTip.Tip="Remove"
+                                            Tag="{Binding}"
+                                            Click="RemoveCheck_Click"/>
+
+                                </Grid>
+
+                            </Border>
+
+                        </DataTemplate>
+
+                    </ItemsControl.ItemTemplate>
+
+                </ItemsControl>
+
+            </ScrollViewer>
+
+        </Border>
+
+    </Grid>
+
+</Window>

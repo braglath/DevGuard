@@ -1,0 +1,109 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="DevGuard.Views.StyledDialog"
+        Width="460"
+        Height="240"
+        MinWidth="400"
+        MinHeight="200"
+        Background="#0B1120"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Styles>
+
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily"
+                    Value="Inter, Segoe UI, sans-serif"/>
+            <Setter Property="Foreground"
+                    Value="#F8FAFC"/>
+        </Style>
+
+        <Style Selector="TextBlock.dialog-title">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <Style Selector="TextBlock.dialog-message">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+<Style Selector="Button.dialog-button">
+    <Setter Property="Height" Value="42"/>
+    <Setter Property="MinWidth" Value="100"/>
+    <Setter Property="Padding" Value="20,8"/>
+    <Setter Property="FontSize" Value="14"/>
+    <Setter Property="FontWeight" Value="SemiBold"/>
+    <Setter Property="CornerRadius" Value="8"/>
+
+    <!-- Center button text -->
+    <Setter Property="HorizontalContentAlignment"
+            Value="Center"/>
+    <Setter Property="VerticalContentAlignment"
+            Value="Center"/>
+</Style>
+
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style Selector="Button.primary:pointerover">
+            <Setter Property="Background" Value="#3B82F6"/>
+        </Style>
+
+        <Style Selector="Button.secondary">
+            <Setter Property="Background" Value="#172033"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style Selector="Button.secondary:pointerover">
+            <Setter Property="Background" Value="#1E2A3F"/>
+            <Setter Property="BorderBrush" Value="#3B82F6"/>
+        </Style>
+
+        <Style Selector="Button.danger">
+            <Setter Property="Background" Value="#DC2626"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style Selector="Button.danger:pointerover">
+            <Setter Property="Background" Value="#EF4444"/>
+        </Style>
+
+    </Window.Styles>
+
+    <Grid Margin="30"
+          RowDefinitions="Auto,*,Auto">
+
+        <TextBlock x:Name="DialogTitle"
+                   Grid.Row="0"
+                   Classes="dialog-title"/>
+
+        <TextBlock x:Name="DialogMessage"
+                   Grid.Row="1"
+                   Classes="dialog-message"
+                   VerticalAlignment="Center"/>
+
+        <StackPanel Grid.Row="2"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Spacing="10">
+
+            <Button x:Name="SecondaryButton"
+                    Classes="dialog-button secondary"
+                    Click="SecondaryButton_Click"/>
+
+            <Button x:Name="PrimaryButton"
+                    Classes="dialog-button primary"
+                    Click="PrimaryButton_Click"/>
+
+        </StackPanel>
+
+    </Grid>
+
+</Window>
