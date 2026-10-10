@@ -49,6 +49,7 @@ public partial class MainWindow : Window
         DevelopmentButton.Classes.Remove("selected");
         TestingButton.Classes.Remove("selected");
         PullRequestButton.Classes.Remove("selected");
+        BlankButton.Classes.Remove("selected");
     }
 
     private async void Create_Click(

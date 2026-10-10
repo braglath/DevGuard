@@ -51,6 +51,9 @@ public partial class ChecklistWindow : Window
          WorkType.PullRequest =>
              "[Pull Request] Review, approve, merge and verify the pull request.",
 
+         WorkType.Blank =>
+             "Create a custom checklist for your work.",
+
          _ => string.Empty
       };
    }

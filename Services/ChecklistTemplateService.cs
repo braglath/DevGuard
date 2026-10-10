@@ -14,7 +14,8 @@ public class ChecklistTemplateService
          WorkType.Development => DevelopmentChecklist(),
          WorkType.Testing => TestingChecklist(),
          WorkType.PullRequest => PullRequestChecklist(),
-         _ => []
+         WorkType.Blank =>  new List<ChecklistItem>(),
+         _ => new List<ChecklistItem>()
       };
    }
 

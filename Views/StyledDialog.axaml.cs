@@ -5,7 +5,6 @@ namespace DevGuard.Views;
 
 public partial class StyledDialog : Window
 {
-   private readonly bool _isConfirmation;
 
    public StyledDialog(
        string title,
@@ -13,7 +12,6 @@ public partial class StyledDialog : Window
    {
       InitializeComponent();
 
-      _isConfirmation = false;
 
       DialogTitle.Text = title;
       DialogMessage.Text = message;
@@ -32,7 +30,6 @@ public partial class StyledDialog : Window
    {
       InitializeComponent();
 
-      _isConfirmation = true;
 
       DialogTitle.Text = title;
       DialogMessage.Text = message;

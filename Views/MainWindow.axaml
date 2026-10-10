@@ -326,6 +326,22 @@
 
                 </Button>
 
+<!-- BLANK -->
+                <Button x:Name="BlankButton"
+        Classes="template"
+        Tag="Blank"
+        Click="WorkflowButton_Click">
+    <StackPanel HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Spacing="10">
+        <TextBlock Text="＋"
+                   Classes="template-icon"/>
+        <TextBlock Text="Blank Checklist"
+                   HorizontalAlignment="Center"
+                   TextWrapping="Wrap"/>
+    </StackPanel>
+</Button>
+
             </WrapPanel>
 
 
