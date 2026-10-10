@@ -166,6 +166,27 @@
     <Setter Property="BorderBrush" Value="#3B82F6"/>
 </Style>
 
+<Style Selector="Button.recent">
+    <Setter Property="Height" Value="56"/>
+    <Setter Property="HorizontalAlignment" Value="Stretch"/>
+    <Setter Property="HorizontalContentAlignment" Value="Left"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="Background" Value="#111827"/>
+    <Setter Property="BorderBrush" Value="#263449"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="10"/>
+    <Setter Property="Padding" Value="14,8"/>
+</Style>
+
+<Style Selector="Button.recent:pointerover">
+    <Setter Property="Background" Value="#1E2A3F"/>
+    <Setter Property="BorderBrush" Value="#3B82F6"/>
+</Style>
+
+<Style Selector="Button.recent:pressed">
+    <Setter Property="Background" Value="#172033"/>
+</Style>
+
 
         <!-- ========================================================= -->
         <!-- TEMPLATE CARD                                              -->
@@ -326,9 +347,11 @@
                     IsVisible="False"/>
 
     <!-- Your existing template-selection screen -->
-    <Grid x:Name="HomePanel"
-          Grid.Row="1"
-          RowDefinitions="Auto,Auto,Auto,*"
+    <ScrollViewer x:Name="HomePanel"
+                  Grid.Row="1"
+                  HorizontalScrollBarVisibility="Disabled"
+                  VerticalScrollBarVisibility="Auto">
+    <Grid RowDefinitions="Auto,Auto,Auto,Auto,*"
           Margin="50">
 
         <!-- ========================================================= -->
@@ -355,10 +378,36 @@
 
 
         <!-- ========================================================= -->
+        <!-- RECENT CHECKLISTS                                           -->
+        <!-- ========================================================= -->
+
+        <StackPanel x:Name="RecentSection"
+                    Grid.Row="1"
+                    Width="720"
+                    HorizontalAlignment="Center"
+                    Spacing="8"
+                    Margin="0,0,0,32"
+                    IsVisible="False">
+
+            <TextBlock Text="Recent checklists"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Foreground="#CBD5E1"/>
+
+            <Grid x:Name="RecentItems"
+                  ColumnDefinitions="*,*"
+                  RowDefinitions="Auto,Auto"
+                  ColumnSpacing="12"
+                  RowSpacing="8"/>
+
+        </StackPanel>
+
+
+        <!-- ========================================================= -->
         <!-- WORK TITLE                                                  -->
         <!-- ========================================================= -->
 
-        <StackPanel Grid.Row="1"
+        <StackPanel Grid.Row="2"
                     Width="720"
                     HorizontalAlignment="Center"
                     Spacing="9"
@@ -381,7 +430,7 @@
         <!-- TEMPLATE LABEL                                              -->
         <!-- ========================================================= -->
 
-        <StackPanel Grid.Row="2"
+        <StackPanel Grid.Row="3"
                     Width="720"
                     HorizontalAlignment="Center"
                     Spacing="5"
@@ -403,7 +452,7 @@
         <!-- TEMPLATES + CREATE                                          -->
         <!-- ========================================================= -->
 
-        <StackPanel Grid.Row="3"
+        <StackPanel Grid.Row="4"
                     HorizontalAlignment="Center"
                     Spacing="42">
 
@@ -560,6 +609,7 @@
         </StackPanel>
 
     </Grid>
+    </ScrollViewer>
 </Grid>
 
 </Window>

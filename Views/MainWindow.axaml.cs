@@ -17,6 +17,7 @@ public partial class MainWindow : Window
 {
     private readonly ChecklistTemplateService _checklistService = new();
     private readonly ChecklistFileService _fileService = new();
+    private readonly RecentChecklistService _recentChecklists = new();
     private readonly List<ChecklistTab> _tabs = new();
 
     private WorkType? _selectedWorkType;
@@ -26,6 +27,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        RefreshRecentList();
     }
 
     private void WorkflowButton_Click(
@@ -225,6 +227,7 @@ public partial class MainWindow : Window
         if (_activeTab != tab)
         {
             TabBar.IsVisible = _tabs.Count > 0;
+            RefreshRecentList();
             return;
         }
 
@@ -241,6 +244,8 @@ public partial class MainWindow : Window
             TabBar.IsVisible = false;
             HomePanel.IsVisible = true;
         }
+
+        RefreshRecentList();
     }
 
     private void ActivateTab(ChecklistTab tab)
@@ -272,6 +277,7 @@ public partial class MainWindow : Window
 
         HomePanel.IsVisible = true;
         TabBar.IsVisible = _tabs.Count > 0;
+        RefreshRecentList();
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
@@ -370,17 +376,61 @@ public partial class MainWindow : Window
             return;
         }
 
-        path = Path.GetFullPath(path);
+        await OpenChecklistPathAsync(path);
+    }
 
-        var alreadyOpen = FindTabByPath(path);
+    private void Recent_Click(object? sender, RoutedEventArgs e)
+    {
+        if (sender is not Button { Tag: string path })
+            return;
+
+        _ = RunFileOperation(() => OpenChecklistPathAsync(path));
+    }
+
+    private async Task OpenChecklistPathAsync(string path)
+    {
+        var fullPath = NormalizePath(path);
+        if (fullPath is null)
+        {
+            _recentChecklists.Remove(path);
+            RefreshRecentList();
+            await ShowMessage("That recent checklist could not be opened.");
+            return;
+        }
+
+        // An open tab already has the latest edits, including ones not saved yet.
+        // Switching to it must not read the file again.
+        var alreadyOpen = FindTabByPath(fullPath);
         if (alreadyOpen is not null)
         {
+            if (!alreadyOpen.IsDirty)
+                RememberChecklist(fullPath, alreadyOpen.Document);
+            else if (_recentChecklists.Find(fullPath) is { } saved)
+                RememberChecklist(fullPath, saved);
+
             ActivateTab(alreadyOpen);
             return;
         }
 
-        var document = await _fileService.LoadAsync(path);
-        OpenDocumentTab(document, path, isDirty: false);
+        if (!File.Exists(fullPath))
+        {
+            var known = _recentChecklists.Find(fullPath);
+            if (known is not null)
+            {
+                _recentChecklists.Remove(fullPath);
+                RefreshRecentList();
+                await ShowMessage(
+                    $"Couldn't find \"{known.Title}\". It was removed from Recent checklists.");
+                return;
+            }
+
+            await ShowMessage("That checklist file could not be found.");
+            return;
+        }
+
+        var document = await _fileService.LoadAsync(fullPath);
+        RememberChecklist(fullPath, document);
+        OpenDocumentTab(document, fullPath, isDirty: false);
     }
 
     private async Task<bool> SaveAsync(ChecklistTab tab)
@@ -500,9 +550,140 @@ public partial class MainWindow : Window
         tab.FilePath = path;
         tab.IsDirty = false;
         UpdateTabChrome(tab);
+        RememberChecklist(path, tab.Document);
         await ShowMessage($"Saved \"{tab.Document.Title}\".");
         return true;
     }
+
+    private void RememberChecklist(string path, ChecklistDocument document) =>
+        RememberChecklist(path, document.Title, document.WorkType, document.IsCompleted);
+
+    private void RememberChecklist(
+        string path,
+        RecentChecklistEntry saved) =>
+        RememberChecklist(path, saved.Title, saved.WorkType, saved.IsCompleted);
+
+    private void RememberChecklist(
+        string path,
+        string title,
+        WorkType workType,
+        bool isCompleted)
+    {
+        _recentChecklists.Remember(path, title, workType, isCompleted);
+        RefreshRecentList();
+    }
+
+    private void RefreshRecentList()
+    {
+        RecentItems.Children.Clear();
+
+        var index = 0;
+        foreach (var entry in _recentChecklists.Entries.Take(RecentChecklistService.MaxEntries))
+        {
+            var openTab = FindTabByPath(entry.Path);
+            var missing = openTab is null && !File.Exists(entry.Path);
+            var title = openTab?.Document.Title ?? entry.Title;
+            var completed = openTab?.Document.IsCompleted ?? entry.IsCompleted;
+
+            var detail = openTab is not null
+                ? OpenTabDetail(openTab)
+                : missing
+                    ? "File missing"
+                    : SavedChecklistDetail(entry);
+
+            var titleText = new TextBlock
+            {
+                Text = title,
+                FontSize = 14,
+                FontWeight = FontWeight.SemiBold,
+                Foreground = new SolidColorBrush(Color.Parse("#F8FAFC")),
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                TextAlignment = TextAlignment.Left,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch
+            };
+
+            var detailText = new TextBlock
+            {
+                Text = detail,
+                FontSize = 12,
+                Foreground = new SolidColorBrush(Color.Parse(missing ? "#F87171" : "#94A3B8")),
+                TextTrimming = TextTrimming.CharacterEllipsis,
+                TextAlignment = TextAlignment.Left,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch
+            };
+
+            var text = new StackPanel
+            {
+                Spacing = 2,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                Children = { titleText, detailText }
+            };
+
+            var content = new Grid
+            {
+                ColumnDefinitions = new ColumnDefinitions("*,Auto"),
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+                VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center
+            };
+            content.Children.Add(text);
+
+            if (completed && !missing)
+            {
+                var mark = new TextBlock
+                {
+                    Text = "Completed",
+                    FontSize = 12,
+                    Foreground = new SolidColorBrush(Color.Parse("#4ADE80")),
+                    VerticalAlignment = Avalonia.Layout.VerticalAlignment.Center,
+                    Margin = new Avalonia.Thickness(12, 0, 0, 0)
+                };
+                Grid.SetColumn(mark, 1);
+                content.Children.Add(mark);
+            }
+
+            var button = new Button
+            {
+                Classes = { "recent" },
+                Tag = entry.Path,
+                Content = content,
+                HorizontalAlignment = Avalonia.Layout.HorizontalAlignment.Stretch,
+                HorizontalContentAlignment = Avalonia.Layout.HorizontalAlignment.Stretch
+            };
+            ToolTip.SetTip(button, entry.Path);
+            button.Click += Recent_Click;
+
+            Grid.SetColumn(button, index % 2);
+            Grid.SetRow(button, index / 2);
+            RecentItems.Children.Add(button);
+            index++;
+        }
+
+        RecentSection.IsVisible = RecentItems.Children.Count > 0;
+    }
+
+    private static string OpenTabDetail(ChecklistTab tab)
+    {
+        var detail = WorkflowLabel(tab.Document.WorkType) + " · Open";
+        if (tab.IsDirty)
+            detail += " · Unsaved changes";
+        return detail;
+    }
+
+    private static string SavedChecklistDetail(RecentChecklistEntry entry) =>
+        WorkflowLabel(entry.WorkType);
+
+    private static string WorkflowLabel(WorkType workType) =>
+        workType switch
+        {
+            WorkType.Bug => "Bug Fix",
+            WorkType.Feature => "Feature",
+            WorkType.Development => "Development",
+            WorkType.Testing => "Testing",
+            WorkType.PullRequest => "Pull Request",
+            WorkType.Blank => "Blank",
+            _ => workType.ToString()
+        };
 
     private static void CopyViewOntoDocument(ChecklistTab tab)
     {
