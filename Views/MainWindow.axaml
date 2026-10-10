@@ -20,7 +20,113 @@
             <Setter Property="Foreground"
                     Value="#F8FAFC"/>
         </Style>
+<Style Selector="Border.workspace-tab">
+    <Setter Property="MinWidth" Value="64"/>
+    <Setter Property="MaxWidth" Value="190"/>
+    <Setter Property="Height" Value="40"/>
+    <Setter Property="Padding" Value="8,3"/>
+    <Setter Property="Background" Value="#172033"/>
+    <Setter Property="BorderBrush" Value="#263449"/>
+    <Setter Property="BorderThickness" Value="1"/>
+    <Setter Property="CornerRadius" Value="9"/>
+</Style>
 
+<Style Selector="Border.workspace-tab.selected">
+    <Setter Property="Background" Value="#172F55"/>
+    <Setter Property="BorderBrush" Value="#3B82F6"/>
+</Style>
+
+<!-- The tab scroller reserves a row for its bar so it does not cover the tabs.
+     These styles keep that bar as a thin thumb, without the arrow buttons. -->
+<Style Selector="ScrollViewer.tabs /template/ ScrollBar#PART_HorizontalScrollBar">
+    <Setter Property="AllowAutoHide" Value="True"/>
+    <Setter Property="Height" Value="4"/>
+    <Setter Property="MinHeight" Value="4"/>
+    <Setter Property="Margin" Value="0,6,0,0"/>
+    <Setter Property="Background" Value="Transparent"/>
+</Style>
+
+<Style Selector="ScrollViewer.tabs /template/ ScrollBar#PART_HorizontalScrollBar /template/ Grid#Root">
+    <Setter Property="Background" Value="Transparent"/>
+</Style>
+
+<Style Selector="ScrollViewer.tabs /template/ ScrollBar#PART_HorizontalScrollBar /template/ Rectangle#TrackRect">
+    <Setter Property="IsVisible" Value="False"/>
+</Style>
+
+<Style Selector="ScrollViewer.tabs /template/ ScrollBar#PART_HorizontalScrollBar /template/ RepeatButton#PART_LineUpButton,
+                 ScrollViewer.tabs /template/ ScrollBar#PART_HorizontalScrollBar /template/ RepeatButton#PART_LineDownButton">
+    <Setter Property="IsVisible" Value="False"/>
+    <Setter Property="Width" Value="0"/>
+    <Setter Property="MinWidth" Value="0"/>
+    <Setter Property="MinHeight" Value="0"/>
+</Style>
+
+<Style Selector="ScrollViewer.tabs /template/ ScrollBar#PART_HorizontalScrollBar /template/ Thumb">
+    <Setter Property="Height" Value="3"/>
+    <Setter Property="MinHeight" Value="3"/>
+    <Setter Property="MinWidth" Value="32"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+    <Setter Property="CornerRadius" Value="2"/>
+    <Setter Property="RenderTransform" Value="none"/>
+    <Setter Property="Background" Value="#64748B"/>
+</Style>
+
+<Style Selector="ScrollViewer.tabs /template/ ScrollBar#PART_HorizontalScrollBar[IsExpanded=true] /template/ Grid#Root">
+    <Setter Property="Background" Value="Transparent"/>
+</Style>
+
+<Style Selector="ScrollViewer.tabs /template/ ScrollBar#PART_HorizontalScrollBar[IsExpanded=true] /template/ Rectangle#TrackRect">
+    <Setter Property="Opacity" Value="0"/>
+    <Setter Property="IsVisible" Value="False"/>
+</Style>
+
+<Style Selector="ScrollViewer.tabs /template/ ScrollBar#PART_HorizontalScrollBar[IsExpanded=true] /template/ RepeatButton">
+    <Setter Property="Opacity" Value="0"/>
+    <Setter Property="IsVisible" Value="False"/>
+</Style>
+
+<Style Selector="ScrollViewer.tabs /template/ ScrollBar#PART_HorizontalScrollBar[IsExpanded=true] /template/ Thumb">
+    <Setter Property="Height" Value="3"/>
+    <Setter Property="RenderTransform" Value="none"/>
+    <Setter Property="Background" Value="#94A3B8"/>
+</Style>
+
+<Style Selector="Button.tab-close">
+    <Setter Property="Width" Value="24"/>
+    <Setter Property="Height" Value="24"/>
+    <Setter Property="MinWidth" Value="24"/>
+    <Setter Property="Padding" Value="0"/>
+    <Setter Property="FontSize" Value="16"/>
+    <Setter Property="Background" Value="Transparent"/>
+    <Setter Property="Foreground" Value="#94A3B8"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="CornerRadius" Value="12"/>
+    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+    <Setter Property="VerticalContentAlignment" Value="Center"/>
+</Style>
+
+<Style Selector="Button.tab-close:pointerover">
+    <Setter Property="Background" Value="#3F1D1D"/>
+    <Setter Property="Foreground" Value="#F87171"/>
+</Style>
+
+<Style Selector="Button.new-tab">
+<Setter Property="Width" Value="36"/>
+<Setter Property="MinWidth" Value="36"/>
+<Setter Property="Height" Value="36"/>
+<Setter Property="Padding" Value="0"/>
+<Setter Property="CornerRadius" Value="18"/>
+<Setter Property="HorizontalContentAlignment" Value="Center"/>
+<Setter Property="VerticalContentAlignment" Value="Center"/>
+    <Setter Property="FontSize" Value="22"/>
+    <Setter Property="FontWeight" Value="Normal"/>
+    <Setter Property="Background" Value="#2563EB"/>
+    <Setter Property="Foreground" Value="White"/>
+    <Setter Property="BorderThickness" Value="0"/>
+    <Setter Property="HorizontalAlignment" Value="Center"/>
+    <Setter Property="VerticalAlignment" Value="Center"/>
+</Style>
 
         <!-- ========================================================= -->
         <!-- WORK TITLE INPUT                                           -->
@@ -133,7 +239,62 @@
     <!-- MAIN CONTENT                                                  -->
     <!-- ============================================================= -->
 
-    <Grid RowDefinitions="Auto,Auto,Auto,*"
+    <Grid RowDefinitions="Auto,*">
+
+    <!-- Tab bar -->
+    <Border x:Name="TabBar"
+        Grid.Row="0"
+        Background="#0B1120"
+        Padding="12,8"
+        BorderBrush="#263449"
+        BorderThickness="0,0,0,1"
+        IsVisible="False">
+
+    <Grid ColumnDefinitions="*,Auto"
+          ColumnSpacing="12">
+
+        <ScrollViewer x:Name="TabsScrollViewer"
+                      Classes="tabs"
+                      Grid.Column="0"
+                      HorizontalScrollBarVisibility="Auto"
+                      VerticalScrollBarVisibility="Disabled"
+                      AllowAutoHide="False">
+
+            <StackPanel x:Name="TabsPanel"
+                        Orientation="Horizontal"
+                        Spacing="8"/>
+        </ScrollViewer>
+
+        <Button Grid.Column="1"
+                Classes="new-tab"
+                ToolTip.Tip="New checklist"
+                Click="NewTab_Click">
+            <Grid Width="14" Height="14">
+                <Rectangle Width="14"
+                           Height="2"
+                           Fill="White"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+                <Rectangle Width="2"
+                           Height="14"
+                           Fill="White"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+            </Grid>
+        </Button>
+
+    </Grid>
+</Border>
+
+    <!-- Active checklist view -->
+    <ContentControl x:Name="WorkspaceContent"
+                    Grid.Row="1"
+                    IsVisible="False"/>
+
+    <!-- Your existing template-selection screen -->
+    <Grid x:Name="HomePanel"
+          Grid.Row="1"
+          RowDefinitions="Auto,Auto,Auto,*"
           Margin="50">
 
         <!-- ========================================================= -->
@@ -356,5 +517,6 @@
         </StackPanel>
 
     </Grid>
+</Grid>
 
 </Window>
