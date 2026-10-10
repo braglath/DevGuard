@@ -188,7 +188,7 @@
 
         <!-- ACTION BAR -->
 <Grid Grid.Row="1"
-      ColumnDefinitions="Auto,*,Auto"
+      ColumnDefinitions="Auto,Auto,Auto,*,Auto"
       ColumnSpacing="10">
 
     <Button Grid.Column="0"
@@ -196,9 +196,17 @@
             Classes="action secondary"
             Click="AddCheck_Click"/>
 
-    <Border Grid.Column="1"/>
+    <Button Grid.Column="1"
+            Content="Save"
+            Classes="action secondary"
+            Click="Save_Click"/>
 
     <Button Grid.Column="2"
+            Content="Save As"
+            Classes="action secondary"
+            Click="SaveAs_Click"/>
+
+    <Button Grid.Column="4"
             Content="✓  Complete"
             Classes="action primary"
             Click="Complete_Click"/>

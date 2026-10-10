@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json.Serialization;
 
 namespace DevGuard.Models;
 
@@ -15,6 +16,7 @@ public class ChecklistItem
 
    public string Notes { get; set; } = string.Empty;
 
+   [JsonIgnore]
    public bool HasNotes =>
        !string.IsNullOrWhiteSpace(Notes);
 
