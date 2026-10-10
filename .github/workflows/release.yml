@@ -196,17 +196,21 @@ jobs:
         run: |
           set -euo pipefail
           tag="${{ github.ref_name }}"
-          if gh release view "$tag" >/dev/null 2>&1; then
-            echo "A GitHub Release for $tag already exists. This workflow will not replace it." >&2
-            exit 1
-          fi
           cd release-assets
-          gh release create "$tag" \
-            "DevGuard-${tag}-win-x64.zip" \
-            "DevGuard-${tag}-osx-arm64.dmg" \
-            "DevGuard-${tag}-osx-x64.dmg" \
-            --title "DevGuard $tag" \
-            --generate-notes
+          assets=(
+            "DevGuard-${tag}-win-x64.zip"
+            "DevGuard-${tag}-osx-arm64.dmg"
+            "DevGuard-${tag}-osx-x64.dmg"
+          )
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "Release $tag already exists. Adding the packages to that release."
+            gh release upload "$tag" "${assets[@]}" --clobber
+          else
+            gh release create "$tag" \
+              "${assets[@]}" \
+              --title "DevGuard $tag" \
+              --generate-notes
+          fi
 
       - name: Confirm release assets
         env:

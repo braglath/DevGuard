@@ -44,7 +44,7 @@ If macOS says the app cannot be opened because it is from an unidentified develo
 Do not delete or force-push the tag as the first step.
 
 - The workflow failed and no Release was created: open the failed run in the Actions tab and re-run it. Re-running uses the workflow stored in the tagged commit.
-- A Release exists but is missing an asset: delete that **Release** in GitHub (this keeps the Git tag), then re-run the workflow.
+- A Release for that tag already exists: the workflow keeps that release and uploads the three packages onto it. A package with the same filename is replaced. You do not need to delete the Release.
 - The tag points at a commit that does not contain the fix: ship the fix under a new tag, for example `v1.1.1`, from the updated commit.
 
 ```bash
