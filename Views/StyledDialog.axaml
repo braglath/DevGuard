@@ -94,6 +94,11 @@
                     HorizontalAlignment="Right"
                     Spacing="10">
 
+            <Button x:Name="TertiaryButton"
+                    Classes="dialog-button secondary"
+                    IsVisible="False"
+                    Click="TertiaryButton_Click"/>
+
             <Button x:Name="SecondaryButton"
                     Classes="dialog-button secondary"
                     Click="SecondaryButton_Click"/>

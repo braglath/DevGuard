@@ -8,6 +8,24 @@
         Title="DevGuard"
         Background="#0B1120">
 
+    <NativeMenu.Menu>
+        <NativeMenu>
+            <NativeMenuItem Header="File">
+                <NativeMenu>
+                    <NativeMenuItem Header="Open…"
+                                    Click="OpenMenu_Click"/>
+                    <NativeMenuItemSeparator/>
+                    <NativeMenuItem Header="Save"
+                                    Gesture="Ctrl+S"
+                                    Click="SaveMenu_Click"/>
+                    <NativeMenuItem Header="Save As…"
+                                    Gesture="Ctrl+Shift+S"
+                                    Click="SaveAsMenu_Click"/>
+                </NativeMenu>
+            </NativeMenuItem>
+        </NativeMenu>
+    </NativeMenu.Menu>
+
     <Window.Styles>
 
         <!-- ========================================================= -->
@@ -230,6 +248,22 @@
 
         <Style Selector="Button.create:pressed">
             <Setter Property="Background" Value="#1D4ED8"/>
+        </Style>
+
+        <Style Selector="Button.create.open">
+            <Setter Property="Background" Value="#172033"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style Selector="Button.create.open:pointerover">
+            <Setter Property="Background" Value="#1E2A3F"/>
+            <Setter Property="BorderBrush" Value="#3B82F6"/>
+        </Style>
+
+        <Style Selector="Button.create.open:pressed">
+            <Setter Property="Background" Value="#172033"/>
         </Style>
 
     </Window.Styles>
@@ -508,11 +542,20 @@
 
             <!-- CREATE -->
 
-            <Button x:Name="CreateButton"
-                    Classes="create"
-                    Content="Create Checklist"
-                    HorizontalAlignment="Center"
-                    Click="Create_Click"/>
+            <StackPanel Orientation="Horizontal"
+                        HorizontalAlignment="Center"
+                        Spacing="12">
+
+                <Button Classes="create open"
+                        Content="Open Checklist"
+                        Click="Open_Click"/>
+
+                <Button x:Name="CreateButton"
+                        Classes="create"
+                        Content="Create Checklist"
+                        Click="Create_Click"/>
+
+            </StackPanel>
 
         </StackPanel>
 

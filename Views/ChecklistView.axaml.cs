@@ -19,6 +19,20 @@ public partial class ChecklistView : UserControl
 
    public IReadOnlyList<ChecklistItem> Items => _checklist;
 
+   public event EventHandler? DocumentEdited;
+
+   public event EventHandler? DocumentCompleted;
+
+   public event EventHandler? SaveRequested;
+
+   public event EventHandler? SaveAsRequested;
+
+   public bool HasIncompleteRequiredChecks() =>
+       _checklist.Any(item =>
+           !item.IsCompleted &&
+           (item.Priority == ChecklistPriority.Critical ||
+            item.Priority == ChecklistPriority.Required));
+
    public ChecklistView(
        WorkType workType,
        string workTitle,
@@ -79,7 +93,19 @@ public partial class ChecklistView : UserControl
 
       item.IsCompleted = checkBox.IsChecked == true;
 
+      MarkEdited();
+   }
+
+   private void Save_Click(object? sender, RoutedEventArgs e) =>
+       SaveRequested?.Invoke(this, EventArgs.Empty);
+
+   private void SaveAs_Click(object? sender, RoutedEventArgs e) =>
+       SaveAsRequested?.Invoke(this, EventArgs.Empty);
+
+   private void MarkEdited()
+   {
       UpdateProgress();
+      DocumentEdited?.Invoke(this, EventArgs.Empty);
    }
 
    private async void AddCheck_Click(object? sender, RoutedEventArgs e)
@@ -95,7 +121,7 @@ public partial class ChecklistView : UserControl
          return;
 
       _checklist.Add(result);
-      UpdateProgress();
+      MarkEdited();
    }
 
    private async void EditCheck_Click(object? sender, RoutedEventArgs e)
@@ -123,7 +149,7 @@ public partial class ChecklistView : UserControl
       ChecklistItems.ItemsSource = null;
       ChecklistItems.ItemsSource = _checklist;
 
-      UpdateProgress();
+      MarkEdited();
    }
 
    private async void RemoveCheck_Click(object? sender, RoutedEventArgs e)
@@ -149,35 +175,37 @@ public partial class ChecklistView : UserControl
          return;
 
       _checklist.Remove(item);
-      UpdateProgress();
+      MarkEdited();
    }
+
    private async void Complete_Click(object? sender, RoutedEventArgs e)
    {
-      var incompleteRequired = _checklist
-          .Where(x =>
-              !x.IsCompleted &&
-              (x.Priority == ChecklistPriority.Critical ||
-               x.Priority == ChecklistPriority.Required))
-          .ToList();
-
       var owner = GetOwnerWindow();
       if (owner is null)
          return;
 
-      if (incompleteRequired.Count > 0)
+      var incompleteRequired = _checklist.Count(item =>
+          !item.IsCompleted &&
+          (item.Priority == ChecklistPriority.Critical ||
+           item.Priority == ChecklistPriority.Required));
+
+      if (incompleteRequired > 0)
       {
          var dialog = new StyledDialog(
              "Checklist incomplete",
-             $"You still have {incompleteRequired.Count} " +
+             $"You still have {incompleteRequired} " +
              "Critical/Required check(s) incomplete.");
 
          await dialog.ShowDialog(owner);
          return;
       }
 
+      // The document flag is stored by the window. It is not written until Save.
+      DocumentCompleted?.Invoke(this, EventArgs.Empty);
+
       var successDialog = new StyledDialog(
           "Checklist complete",
-          "All required checks have been completed.");
+          "All required checks have been completed. Save the checklist to keep this.");
 
       await successDialog.ShowDialog(owner);
    }
