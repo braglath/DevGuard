@@ -1,0 +1,231 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-windows:
+    name: Windows x64
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore DevGuard.csproj
+
+      - name: Publish Windows x64
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag = "${{ github.ref_name }}"
+          if ($tag -notmatch '^v\d+\.\d+\.\d+') {
+            throw "Tag '$tag' is not a version like v1.1.0"
+          }
+          $version = $tag.Substring(1)
+          dotnet publish DevGuard.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:IncludeNativeLibrariesForSelfExtract=true `
+            -p:Version=$version `
+            -o "publish/win-x64"
+
+      - name: Create ZIP
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tag = "${{ github.ref_name }}"
+          $publishDir = Join-Path (Get-Location) "publish/win-x64"
+          $exe = Join-Path $publishDir "DevGuard.exe"
+          if (-not (Test-Path -LiteralPath $exe)) {
+            throw "Publish did not produce $exe"
+          }
+          if ((Get-Item -LiteralPath $exe).Length -le 0) {
+            throw "DevGuard.exe is empty"
+          }
+
+          $zip = Join-Path (Get-Location) "DevGuard-$tag-win-x64.zip"
+          if (Test-Path -LiteralPath $zip) {
+            Remove-Item -LiteralPath $zip
+          }
+          Compress-Archive -Path (Join-Path $publishDir '*') -DestinationPath $zip
+          if ((Get-Item -LiteralPath $zip).Length -le 0) {
+            throw "ZIP is empty"
+          }
+
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $zip))
+          try {
+            $entry = $archive.Entries | Where-Object { $_.Name -eq 'DevGuard.exe' }
+            if (-not $entry) {
+              throw "ZIP does not contain DevGuard.exe"
+            }
+          }
+          finally {
+            $archive.Dispose()
+          }
+
+      - name: Upload Windows package
+        uses: actions/upload-artifact@v4
+        with:
+          name: DevGuard-${{ github.ref_name }}-win-x64
+          path: DevGuard-${{ github.ref_name }}-win-x64.zip
+          if-no-files-found: error
+
+  build-macos:
+    name: macOS ${{ matrix.rid }}
+    runs-on: macos-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        rid:
+          - osx-arm64
+          - osx-x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore DevGuard.csproj
+
+      - name: Publish macOS
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ github.ref_name }}"
+          rid="${{ matrix.rid }}"
+          [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]] || {
+            echo "Tag '$tag' is not a version like v1.1.0" >&2
+            exit 1
+          }
+          version="${tag#v}"
+          # Keep native Avalonia libraries as files beside the executable.
+          # A single-file binary does not produce a launchable .app bundle.
+          dotnet publish DevGuard.csproj \
+            -c Release \
+            -r "$rid" \
+            --self-contained true \
+            -p:UseAppHost=true \
+            -p:PublishSingleFile=false \
+            -p:Version="$version" \
+            -o "publish/$rid"
+          [[ -s "publish/$rid/DevGuard" ]] || {
+            echo "Publish did not produce publish/$rid/DevGuard" >&2
+            exit 1
+          }
+
+      - name: Package DMG
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash "scripts/package-macos-dmg.sh" \
+            --rid "${{ matrix.rid }}" \
+            --tag "${{ github.ref_name }}" \
+            --publish-dir "publish/${{ matrix.rid }}" \
+            --output "DevGuard-${{ github.ref_name }}-${{ matrix.rid }}.dmg"
+
+      - name: Upload macOS package
+        uses: actions/upload-artifact@v4
+        with:
+          name: DevGuard-${{ github.ref_name }}-${{ matrix.rid }}
+          path: DevGuard-${{ github.ref_name }}-${{ matrix.rid }}.dmg
+          if-no-files-found: error
+
+  publish-release:
+    name: Publish GitHub Release
+    needs:
+      - build-windows
+      - build-macos
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v4
+        with:
+          path: release-assets
+          merge-multiple: true
+
+      - name: Check packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ github.ref_name }}"
+          cd release-assets
+          assets=(
+            "DevGuard-${tag}-win-x64.zip"
+            "DevGuard-${tag}-osx-arm64.dmg"
+            "DevGuard-${tag}-osx-x64.dmg"
+          )
+          for asset in "${assets[@]}"; do
+            if [[ ! -s "$asset" ]]; then
+              echo "Missing or empty release asset: $asset" >&2
+              exit 1
+            fi
+          done
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ github.ref_name }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            echo "A GitHub Release for $tag already exists. This workflow will not replace it." >&2
+            exit 1
+          fi
+          cd release-assets
+          gh release create "$tag" \
+            "DevGuard-${tag}-win-x64.zip" \
+            "DevGuard-${tag}-osx-arm64.dmg" \
+            "DevGuard-${tag}-osx-x64.dmg" \
+            --title "DevGuard $tag" \
+            --generate-notes
+
+      - name: Confirm release assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          tag="${{ github.ref_name }}"
+          expected=(
+            "DevGuard-${tag}-win-x64.zip"
+            "DevGuard-${tag}-osx-arm64.dmg"
+            "DevGuard-${tag}-osx-x64.dmg"
+          )
+          mapfile -t published < <(gh release view "$tag" --json assets --jq '.assets[].name' | sort)
+          printf '%s\n' "${published[@]}"
+          for name in "${expected[@]}"; do
+            if ! printf '%s\n' "${published[@]}" | grep -Fxq "$name"; then
+              echo "GitHub Release $tag is missing $name" >&2
+              exit 1
+            fi
+          done
