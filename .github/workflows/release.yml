@@ -227,9 +227,12 @@ jobs:
           )
           mapfile -t published < <(gh release view "$tag" --json assets --jq '.assets[].name' | sort)
           printf '%s\n' "${published[@]}"
+          # GitHub release asset names cannot contain spaces. A space in
+          # "Super Dev-v1.2.0-win-x64.zip" is stored as a dot.
           for name in "${expected[@]}"; do
-            if ! printf '%s\n' "${published[@]}" | grep -Fxq "$name"; then
-              echo "GitHub Release $tag is missing $name" >&2
+            published_name="${name// /.}"
+            if ! printf '%s\n' "${published[@]}" | grep -Fxq "$published_name"; then
+              echo "GitHub Release $tag is missing $published_name" >&2
               exit 1
             fi
           done

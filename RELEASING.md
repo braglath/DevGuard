@@ -2,11 +2,11 @@
 
 Pushing a version tag builds Super Dev and attaches three packages to one GitHub Release:
 
-- `Super Dev-v1.1.0-win-x64.zip`
-- `Super Dev-v1.1.0-osx-arm64.dmg` (Apple Silicon)
-- `Super Dev-v1.1.0-osx-x64.dmg` (Intel)
+- `Super.Dev-v1.1.0-win-x64.zip`
+- `Super.Dev-v1.1.0-osx-arm64.dmg` (Apple Silicon)
+- `Super.Dev-v1.1.0-osx-x64.dmg` (Intel)
 
-The tag you push is the version. `v1.2.0` produces `Super Dev-v1.2.0-...` assets and a release titled `Super Dev v1.2.0`. The workflow does not create or move tags.
+The tag you push is the version. `v1.2.0` produces a release titled `Super Dev v1.2.0`. GitHub release filenames cannot contain a space, so the download names use a dot: `Super.Dev-v1.2.0-win-x64.zip`. The app inside is still `Super Dev.exe` or `Super Dev.app`. The workflow does not create or move tags.
 
 These macOS builds are not signed or notarized. macOS Gatekeeper can warn that the app is from an unidentified developer.
 
@@ -33,7 +33,7 @@ Open the repository **Releases** page. The `v1.1.0` release lists the three asse
 
 ## Install
 
-**Windows.** Extract `Super Dev-v1.1.0-win-x64.zip` and run `Super Dev.exe`.
+**Windows.** Extract `Super.Dev-v1.1.0-win-x64.zip` and run `Super Dev.exe`.
 
 **Mac.** Open the DMG for your Mac. Apple Silicon uses `osx-arm64`. Intel uses `osx-x64`. Drag **Super Dev** onto the **Applications** shortcut, then open Super Dev from Applications.
 
