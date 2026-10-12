@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,11 +24,42 @@ public partial class MainWindow : Window
     private WorkType? _selectedWorkType;
     private ChecklistTab? _activeTab;
     private bool _fileOperationInProgress;
+    private NativeMenuItem? _addCheckMenuItem;
+    private NativeMenuItem? _copyToMenuItem;
+    private NativeMenuItem? _deleteChecksMenuItem;
 
     public MainWindow()
     {
         InitializeComponent();
+        BindChecklistMenuItems();
         RefreshRecentList();
+    }
+
+    private void BindChecklistMenuItems()
+    {
+        var options = NativeMenu.GetMenu(this)?.Items
+            .OfType<NativeMenuItem>()
+            .FirstOrDefault(item => item.Header as string == "Options")
+            ?.Menu;
+
+        if (options is null)
+            return;
+
+        foreach (var item in options.Items.OfType<NativeMenuItem>())
+        {
+            switch (item.Header as string)
+            {
+                case "Add Check":
+                    _addCheckMenuItem = item;
+                    break;
+                case "Copy to…":
+                    _copyToMenuItem = item;
+                    break;
+                case "Delete…":
+                    _deleteChecksMenuItem = item;
+                    break;
+            }
+        }
     }
 
     private void WorkflowButton_Click(
@@ -45,6 +77,9 @@ public partial class MainWindow : Window
 
         ClearTemplateSelection();
         button.Classes.Add("selected");
+
+        if (workType == WorkType.Daily)
+            WorkTitleTextBox.Text = DailyTitle(DateTime.Today);
     }
 
     private void ClearTemplateSelection()
@@ -55,6 +90,18 @@ public partial class MainWindow : Window
         TestingButton.Classes.Remove("selected");
         PullRequestButton.Classes.Remove("selected");
         BlankButton.Classes.Remove("selected");
+        DailyButton.Classes.Remove("selected");
+    }
+
+    private void Repository_TextChanged(object? sender, TextChangedEventArgs e)
+    {
+        OpenRepositoryButton.IsEnabled = ExternalLink.CanOpen(RepositoryTextBox.Text);
+    }
+
+    private async void OpenRepository_Click(object? sender, RoutedEventArgs e)
+    {
+        if (!ExternalLink.TryOpen(RepositoryTextBox.Text))
+            await ShowMessage("That repository link could not be opened.");
     }
 
     private void PullRequest_TextChanged(object? sender, TextChangedEventArgs e)
@@ -72,6 +119,20 @@ public partial class MainWindow : Window
         object? sender,
         RoutedEventArgs e)
     {
+        if (_selectedWorkType is null)
+        {
+            await ShowMessage("Please select a template.");
+            return;
+        }
+
+        var workType = _selectedWorkType.Value;
+        if (workType == WorkType.Daily)
+        {
+            if (await CreateDailyTrackerAsync())
+                ClearCreateForm();
+            return;
+        }
+
         var workTitle = WorkTitleTextBox.Text?.Trim();
 
         if (string.IsNullOrWhiteSpace(workTitle))
@@ -80,13 +141,6 @@ public partial class MainWindow : Window
             return;
         }
 
-        if (_selectedWorkType is null)
-        {
-            await ShowMessage("Please select a template.");
-            return;
-        }
-
-        var workType = _selectedWorkType.Value;
         var now = DateTime.UtcNow;
         var document = new ChecklistDocument
         {
@@ -94,6 +148,7 @@ public partial class MainWindow : Window
             Id = Guid.NewGuid(),
             Title = workTitle,
             BranchName = BranchNameTextBox.Text?.Trim() ?? string.Empty,
+            RepositoryUrl = RepositoryTextBox.Text?.Trim() ?? string.Empty,
             PullRequestUrl = PullRequestTextBox.Text?.Trim() ?? string.Empty,
             WorkType = workType,
             CreatedOn = now,
@@ -103,9 +158,84 @@ public partial class MainWindow : Window
         };
 
         OpenDocumentTab(document, filePath: null, isDirty: true);
+        ClearCreateForm();
+    }
 
+    private async Task<bool> CreateDailyTrackerAsync()
+    {
+        var today = DateTime.Today;
+        var path = await PickSavePathAsync(SuggestedFileName(DailyTitle(today)));
+        if (path is null)
+            return false;
+
+        var alreadyOpen = FindTabByPath(path);
+        if (alreadyOpen is not null)
+        {
+            ActivateTab(alreadyOpen);
+            return true;
+        }
+
+        try
+        {
+            if (File.Exists(path))
+            {
+                try
+                {
+                    var existing = await _fileService.LoadAsync(path);
+                    if (existing.WorkType == WorkType.Daily &&
+                        existing.Title == DailyTitle(today))
+                    {
+                        RememberChecklist(path, existing);
+                        OpenDocumentTab(existing, path, isDirty: false);
+                        return true;
+                    }
+                }
+                catch (ChecklistFileException)
+                {
+                }
+            }
+
+            var now = DateTime.UtcNow;
+            var document = new ChecklistDocument
+            {
+                FormatVersion = ChecklistDocument.CurrentFormatVersion,
+                Id = Guid.NewGuid(),
+                Title = DailyTitle(today),
+                BranchName = string.Empty,
+                PullRequestUrl = string.Empty,
+                WorkType = WorkType.Daily,
+                CreatedOn = now,
+                UpdatedOn = now,
+                IsCompleted = false,
+                Items = _checklistService.GetTemplate(WorkType.Daily)
+            };
+
+            var replaceDifferentDocument = await PrepareOverwriteAsync(path, document.Id);
+            if (replaceDifferentDocument is null)
+                return false;
+
+            await _fileService.SaveAsync(path, document, replaceDifferentDocument.Value);
+            RememberChecklist(path, document);
+            OpenDocumentTab(document, path, isDirty: false);
+            return true;
+        }
+        catch (Exception ex) when (ex is ChecklistFileException or IOException or UnauthorizedAccessException)
+        {
+            await ShowMessage(ex is ChecklistFileException fileEx
+                ? fileEx.Message
+                : "Today's tracker could not be created.");
+            return false;
+        }
+    }
+
+    private static string DailyTitle(DateTime day) =>
+        day.ToString("dd MMM yyyy", CultureInfo.InvariantCulture);
+
+    private void ClearCreateForm()
+    {
         WorkTitleTextBox.Text = string.Empty;
         BranchNameTextBox.Text = string.Empty;
+        RepositoryTextBox.Text = string.Empty;
         PullRequestTextBox.Text = string.Empty;
         _selectedWorkType = null;
         ClearTemplateSelection();
@@ -120,7 +250,9 @@ public partial class MainWindow : Window
             document.WorkType,
             document.Title,
             document.BranchName ?? string.Empty,
+            document.RepositoryUrl ?? string.Empty,
             document.PullRequestUrl ?? string.Empty,
+            document.Deadline,
             document.Items);
 
         // Title sizes the tab. It ellipsizes at the width left inside the tab max
@@ -195,6 +327,7 @@ public partial class MainWindow : Window
         view.DocumentCompleted += (_, _) => OnDocumentCompleted(tab);
         view.SaveRequested += (_, _) => _ = RunFileOperation(() => SaveAsync(tab));
         view.SaveAsRequested += (_, _) => _ = RunFileOperation(() => SaveAsAsync(tab));
+        view.CopyRequested += (_, _) => _ = RunFileOperation(() => CopyChecklistAsync(tab));
 
         tabHeader.PointerPressed += (_, e) =>
         {
@@ -260,6 +393,7 @@ public partial class MainWindow : Window
             WorkspaceContent.IsVisible = false;
             TabBar.IsVisible = false;
             HomePanel.IsVisible = true;
+            SetChecklistActionsEnabled(false);
         }
 
         RefreshRecentList();
@@ -278,6 +412,7 @@ public partial class MainWindow : Window
         WorkspaceContent.IsVisible = true;
         TabBar.IsVisible = true;
         HomePanel.IsVisible = false;
+        SetChecklistActionsEnabled(true);
     }
 
     private void NewTab_Click(
@@ -294,20 +429,43 @@ public partial class MainWindow : Window
 
         HomePanel.IsVisible = true;
         TabBar.IsVisible = _tabs.Count > 0;
+        SetChecklistActionsEnabled(false);
         RefreshRecentList();
+    }
+
+    private void SetChecklistActionsEnabled(bool enabled)
+    {
+        if (_addCheckMenuItem is not null)
+            _addCheckMenuItem.IsEnabled = enabled;
+
+        if (_copyToMenuItem is not null)
+            _copyToMenuItem.IsEnabled = enabled;
+
+        if (_deleteChecksMenuItem is not null)
+            _deleteChecksMenuItem.IsEnabled = enabled;
     }
 
     protected override void OnKeyDown(KeyEventArgs e)
     {
         base.OnKeyDown(e);
 
-        if (e.Handled || e.Key != Key.S)
+        if (e.Handled)
             return;
 
         var hasCommand = e.KeyModifiers.HasFlag(KeyModifiers.Control)
             || e.KeyModifiers.HasFlag(KeyModifiers.Meta);
 
-        if (!hasCommand || ActiveTab() is not { } tab)
+        if (!hasCommand)
+            return;
+
+        if (e.Key == Key.N)
+        {
+            e.Handled = true;
+            ShowHomeScreen();
+            return;
+        }
+
+        if (e.Key != Key.S || ActiveTab() is not { } tab)
             return;
 
         e.Handled = true;
@@ -320,6 +478,9 @@ public partial class MainWindow : Window
 
     private void Open_Click(object? sender, RoutedEventArgs e) =>
         _ = RunFileOperation(OpenAsync);
+
+    private void NewChecklistMenu_Click(object? sender, EventArgs e) =>
+        ShowHomeScreen();
 
     private void OpenMenu_Click(object? sender, EventArgs e) =>
         _ = RunFileOperation(OpenAsync);
@@ -335,6 +496,20 @@ public partial class MainWindow : Window
 
     private void SaveAsMenu_Click(object? sender, EventArgs e) =>
         SaveActiveTab(saveAs: true);
+
+    private void CopyMenu_Click(object? sender, EventArgs e)
+    {
+        if (ActiveTab() is not { } tab)
+            return;
+
+        _ = RunFileOperation(() => CopyChecklistAsync(tab));
+    }
+
+    private void AddCheckMenu_Click(object? sender, EventArgs e) =>
+        ActiveTab()?.View.AddCheck();
+
+    private void DeleteChecksMenu_Click(object? sender, EventArgs e) =>
+        ActiveTab()?.View.DeleteChecks();
 
     private void SaveActiveTab(bool saveAs)
     {
@@ -467,12 +642,15 @@ public partial class MainWindow : Window
         return await WriteDocumentAsync(tab, path);
     }
 
-    private async Task<string?> PickSavePathAsync(ChecklistTab tab)
+    private Task<string?> PickSavePathAsync(ChecklistTab tab) =>
+        PickSavePathAsync(SuggestedFileName(tab.Document.Title));
+
+    private async Task<string?> PickSavePathAsync(string suggestedFileName)
     {
         var file = await StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions
         {
             Title = "Save checklist",
-            SuggestedFileName = SuggestedFileName(tab.Document.Title),
+            SuggestedFileName = suggestedFileName,
             DefaultExtension = "superdev.json",
             ShowOverwritePrompt = true,
             FileTypeChoices =
@@ -508,42 +686,9 @@ public partial class MainWindow : Window
             return false;
         }
 
-        var replaceDifferentDocument = false;
-        if (File.Exists(path))
-        {
-            try
-            {
-                var existing = await _fileService.LoadAsync(path);
-                if (existing.Id != tab.Document.Id)
-                {
-                    var overwrite = await ConfirmAsync(
-                        "Overwrite a different checklist?",
-                        $"That file is \"{existing.Title}\", a different checklist. Overwriting it replaces that document.",
-                        "Overwrite",
-                        "Cancel",
-                        danger: true);
-
-                    if (!overwrite)
-                        return false;
-
-                    replaceDifferentDocument = true;
-                }
-            }
-            catch (ChecklistFileException)
-            {
-                var replace = await ConfirmAsync(
-                    "Replace this file?",
-                    "That file isn't a Super Dev checklist. Replace it with this checklist?",
-                    "Replace",
-                    "Cancel",
-                    danger: true);
-
-                if (!replace)
-                    return false;
-
-                replaceDifferentDocument = true;
-            }
-        }
+        var replaceDifferentDocument = await PrepareOverwriteAsync(path, tab.Document.Id);
+        if (replaceDifferentDocument is null)
+            return false;
 
         CopyViewOntoDocument(tab);
 
@@ -553,7 +698,7 @@ public partial class MainWindow : Window
 
         try
         {
-            await _fileService.SaveAsync(path, tab.Document, replaceDifferentDocument);
+            await _fileService.SaveAsync(path, tab.Document, replaceDifferentDocument.Value);
         }
         catch (Exception ex) when (ex is ChecklistFileException or IOException or UnauthorizedAccessException)
         {
@@ -570,6 +715,171 @@ public partial class MainWindow : Window
         RememberChecklist(path, tab.Document);
         await ShowMessage($"Saved \"{tab.Document.Title}\".");
         return true;
+    }
+
+    private async Task CopyChecklistAsync(ChecklistTab source)
+    {
+        source.View.CommitDetails();
+
+        var checks = source.View.Items.ToList();
+        var destinations = _tabs.Where(tab => tab != source).ToList();
+        var dialog = new CopyChecklistWindow(
+            checks.Select(CopyItemLabel).ToList(),
+            destinations.Select(CopyTargetLabel).ToList());
+        var choice = await dialog.ShowDialog<CopyChecklistChoice?>(this);
+        if (choice is null)
+            return;
+
+        var selected = choice.ItemIndexes
+            .Where(index => index >= 0 && index < checks.Count)
+            .Distinct()
+            .Select(index => checks[index])
+            .ToList();
+        if (selected.Count == 0)
+        {
+            await ShowMessage("Choose at least one check to copy.");
+            return;
+        }
+
+        if (choice.DestinationIndex < 0)
+        {
+            await SaveCopyAsNewFileAsync(source, selected);
+            return;
+        }
+
+        if (choice.DestinationIndex >= destinations.Count)
+            return;
+
+        var destination = destinations[choice.DestinationIndex];
+        var added = destination.View.AppendCopies(selected);
+        ActivateTab(destination);
+        await ShowMessage(
+            $"Copied {added} {(added == 1 ? "check" : "checks")} to \"{destination.Document.Title}\".");
+    }
+
+    private async Task SaveCopyAsNewFileAsync(
+        ChecklistTab source,
+        IReadOnlyList<ChecklistItem> items)
+    {
+        var path = await PickSavePathAsync(source);
+        if (path is null)
+            return;
+
+        if (string.Equals(NormalizePath(source.FilePath), NormalizePath(path), StringComparison.OrdinalIgnoreCase))
+        {
+            await ShowMessage("Choose a different file. This checklist is already saved there.");
+            return;
+        }
+
+        var other = FindTabByPath(path);
+        if (other is not null)
+        {
+            await ShowMessage(
+                $"\"{other.Document.Title}\" is already open from that file. Choose a different file.");
+            return;
+        }
+
+        var now = DateTime.UtcNow;
+        var copy = new ChecklistDocument
+        {
+            FormatVersion = ChecklistDocument.CurrentFormatVersion,
+            Id = Guid.NewGuid(),
+            Title = source.View.WorkTitle,
+            BranchName = source.View.BranchName,
+            RepositoryUrl = source.View.RepositoryUrl,
+            PullRequestUrl = source.View.PullRequestUrl,
+            Deadline = source.View.Deadline,
+            WorkType = source.View.WorkType,
+            CreatedOn = now,
+            UpdatedOn = now,
+            IsCompleted = items.Count == source.View.Items.Count &&
+                          source.Document.IsCompleted &&
+                          !source.View.HasIncompleteRequiredChecks(),
+            Items = items.Select(CopyItem).ToList()
+        };
+
+        var replaceDifferentDocument = await PrepareOverwriteAsync(path, copy.Id);
+        if (replaceDifferentDocument is null)
+            return;
+
+        try
+        {
+            await _fileService.SaveAsync(path, copy, replaceDifferentDocument.Value);
+        }
+        catch (Exception ex) when (ex is ChecklistFileException or IOException or UnauthorizedAccessException)
+        {
+            await ShowMessage(ex is ChecklistFileException fileEx
+                ? fileEx.Message
+                : "The checklist could not be saved.");
+            return;
+        }
+
+        RememberChecklist(path, copy);
+        OpenDocumentTab(copy, path, isDirty: false);
+        await ShowMessage($"Saved a copy of \"{copy.Title}\".");
+    }
+
+    private static string CopyItemLabel(ChecklistItem item) =>
+        string.IsNullOrWhiteSpace(item.Detail)
+            ? item.Title
+            : $"{item.Title} — {item.Detail}";
+
+    private static string CopyTargetLabel(ChecklistTab tab)
+    {
+        if (string.IsNullOrWhiteSpace(tab.FilePath))
+            return $"{tab.Document.Title} · Not saved yet";
+
+        return $"{tab.Document.Title} · {Path.GetFileName(tab.FilePath)}";
+    }
+
+    private static ChecklistItem CopyItem(ChecklistItem item) =>
+        new()
+        {
+            Id = Guid.NewGuid(),
+            Title = item.Title,
+            Category = item.Category,
+            Priority = item.Priority,
+            Notes = item.Notes,
+            Deadline = item.Deadline,
+            IsCompleted = item.IsCompleted
+        };
+
+    /// <summary>
+    /// Null means the user cancelled. False means the file can be written as this
+    /// document. True means the file belongs to a different document and the user
+    /// confirmed replacing it.
+    /// </summary>
+    private async Task<bool?> PrepareOverwriteAsync(string path, Guid documentId)
+    {
+        if (!File.Exists(path))
+            return false;
+
+        try
+        {
+            var existing = await _fileService.LoadAsync(path);
+            if (existing.Id == documentId)
+                return false;
+
+            var overwrite = await ConfirmAsync(
+                "Overwrite a different checklist?",
+                $"That file is \"{existing.Title}\", a different checklist. Overwriting it replaces that document.",
+                "Overwrite",
+                "Cancel",
+                danger: true);
+
+            return overwrite ? true : null;
+        }
+        catch (ChecklistFileException)
+        {
+            var replace = await ConfirmAsync(
+                "Replace this file?",
+                "That file isn't a Super Dev checklist. Replace it with this checklist?",
+                "Replace",
+                "Cancel",
+                danger: true);
+
+            return replace ? true : null;
+        }
     }
 
     private void RememberChecklist(string path, ChecklistDocument document) =>
@@ -699,6 +1009,7 @@ public partial class MainWindow : Window
             WorkType.Testing => "Testing",
             WorkType.PullRequest => "Pull Request",
             WorkType.Blank => "Blank",
+            WorkType.Daily => "Daily",
             _ => workType.ToString()
         };
 
@@ -707,7 +1018,9 @@ public partial class MainWindow : Window
         tab.View.CommitDetails();
         tab.Document.Title = tab.View.WorkTitle;
         tab.Document.BranchName = tab.View.BranchName;
+        tab.Document.RepositoryUrl = tab.View.RepositoryUrl;
         tab.Document.PullRequestUrl = tab.View.PullRequestUrl;
+        tab.Document.Deadline = tab.View.Deadline;
         tab.Document.WorkType = tab.View.WorkType;
         tab.Document.Items = tab.View.Items.ToList();
     }
@@ -717,7 +1030,9 @@ public partial class MainWindow : Window
         tab.IsDirty = true;
         tab.Document.Title = tab.View.WorkTitle;
         tab.Document.BranchName = tab.View.BranchName;
+        tab.Document.RepositoryUrl = tab.View.RepositoryUrl;
         tab.Document.PullRequestUrl = tab.View.PullRequestUrl;
+        tab.Document.Deadline = tab.View.Deadline;
         tab.TitleText.Text = tab.Document.Title;
 
         // Opening never reaches this. Completion stays until a Critical or Required
@@ -735,6 +1050,7 @@ public partial class MainWindow : Window
 
         tab.Document.IsCompleted = true;
         tab.IsDirty = true;
+        SuperDev.SuccessSound.PlayComplete();
         UpdateTabChrome(tab);
     }
 

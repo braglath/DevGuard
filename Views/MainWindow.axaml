@@ -13,6 +13,9 @@
         <NativeMenu>
             <NativeMenuItem Header="File">
                 <NativeMenu>
+                    <NativeMenuItem Header="New Checklist"
+                                    Gesture="Ctrl+N"
+                                    Click="NewChecklistMenu_Click"/>
                     <NativeMenuItem Header="Open…"
                                     Click="OpenMenu_Click"/>
                     <NativeMenuItemSeparator/>
@@ -22,6 +25,19 @@
                     <NativeMenuItem Header="Save As…"
                                     Gesture="Ctrl+Shift+S"
                                     Click="SaveAsMenu_Click"/>
+                </NativeMenu>
+            </NativeMenuItem>
+            <NativeMenuItem Header="Options">
+                <NativeMenu>
+                    <NativeMenuItem Header="Add Check"
+                                    IsEnabled="False"
+                                    Click="AddCheckMenu_Click"/>
+                    <NativeMenuItem Header="Copy to…"
+                                    IsEnabled="False"
+                                    Click="CopyMenu_Click"/>
+                    <NativeMenuItem Header="Delete…"
+                                    IsEnabled="False"
+                                    Click="DeleteChecksMenu_Click"/>
                 </NativeMenu>
             </NativeMenuItem>
         </NativeMenu>
@@ -195,16 +211,16 @@
         <!-- ========================================================= -->
 
         <Style Selector="Button.template">
-            <Setter Property="Width" Value="215"/>
-            <Setter Property="Height" Value="145"/>
-            <Setter Property="Margin" Value="6"/>
-            <Setter Property="Padding" Value="18"/>
+            <Setter Property="Width" Value="148"/>
+            <Setter Property="Height" Value="84"/>
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="10,8"/>
             <Setter Property="Background" Value="#172033"/>
             <Setter Property="BorderBrush" Value="#263449"/>
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="CornerRadius" Value="14"/>
             <Setter Property="Foreground" Value="#F8FAFC"/>
-            <Setter Property="FontSize" Value="17"/>
+            <Setter Property="FontSize" Value="14"/>
             <Setter Property="HorizontalContentAlignment"
                     Value="Center"/>
             <Setter Property="VerticalContentAlignment"
@@ -235,7 +251,7 @@
         <!-- ========================================================= -->
 
         <Style Selector="TextBlock.template-icon">
-            <Setter Property="FontSize" Value="34"/>
+            <Setter Property="FontSize" Value="22"/>
             <Setter Property="HorizontalAlignment"
                     Value="Center"/>
             <Setter Property="VerticalAlignment"
@@ -435,6 +451,32 @@
                      Classes="work-title"
                      PlaceholderText="feature/my-change"/>
 
+            <TextBlock Text="Repository link"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Foreground="#CBD5E1"
+                       Margin="0,8,0,0"/>
+
+            <Grid ColumnDefinitions="*,Auto"
+                  ColumnSpacing="8">
+
+                <TextBox x:Name="RepositoryTextBox"
+                         Classes="work-title"
+                         PlaceholderText="https://github.com/org/repo"
+                         TextChanged="Repository_TextChanged"/>
+
+                <Button x:Name="OpenRepositoryButton"
+                        Grid.Column="1"
+                        Content="Open"
+                        Classes="create open"
+                        Height="52"
+                        MinWidth="88"
+                        Padding="16,0"
+                        IsEnabled="False"
+                        Click="OpenRepository_Click"/>
+
+            </Grid>
+
             <TextBlock Text="PR link"
                        FontSize="14"
                        FontWeight="SemiBold"
@@ -492,7 +534,7 @@
 
         <StackPanel Grid.Row="4"
                     HorizontalAlignment="Center"
-                    Spacing="42">
+                    Spacing="36">
 
             <!-- TEMPLATE CARDS -->
 
@@ -505,14 +547,14 @@
                         Tag="Bug"
                         Click="WorkflowButton_Click">
 
-                    <StackPanel Spacing="10"
+                    <StackPanel Spacing="4"
                                 HorizontalAlignment="Center">
 
                         <TextBlock Text="🐛"
                                    Classes="template-icon"/>
 
                         <TextBlock Text="Bug Fix"
-                                   FontSize="17"
+                                   FontSize="14"
                                    FontWeight="SemiBold"
                                    HorizontalAlignment="Center"/>
 
@@ -527,14 +569,14 @@
                         Tag="Feature"
                         Click="WorkflowButton_Click">
 
-                    <StackPanel Spacing="10"
+                    <StackPanel Spacing="4"
                                 HorizontalAlignment="Center">
 
                         <TextBlock Text="✨"
                                    Classes="template-icon"/>
 
                         <TextBlock Text="Feature"
-                                   FontSize="17"
+                                   FontSize="14"
                                    FontWeight="SemiBold"
                                    HorizontalAlignment="Center"/>
 
@@ -549,14 +591,14 @@
                         Tag="Development"
                         Click="WorkflowButton_Click">
 
-                    <StackPanel Spacing="10"
+                    <StackPanel Spacing="4"
                                 HorizontalAlignment="Center">
 
                         <TextBlock Text="💻"
                                    Classes="template-icon"/>
 
                         <TextBlock Text="Development"
-                                   FontSize="17"
+                                   FontSize="14"
                                    FontWeight="SemiBold"
                                    HorizontalAlignment="Center"/>
 
@@ -571,14 +613,14 @@
                         Tag="Testing"
                         Click="WorkflowButton_Click">
 
-                    <StackPanel Spacing="10"
+                    <StackPanel Spacing="4"
                                 HorizontalAlignment="Center">
 
                         <TextBlock Text="🧪"
                                    Classes="template-icon"/>
 
                         <TextBlock Text="Testing"
-                                   FontSize="17"
+                                   FontSize="14"
                                    FontWeight="SemiBold"
                                    HorizontalAlignment="Center"/>
 
@@ -593,14 +635,34 @@
                         Tag="PullRequest"
                         Click="WorkflowButton_Click">
 
-                    <StackPanel Spacing="10"
+                    <StackPanel Spacing="4"
                                 HorizontalAlignment="Center">
 
                         <TextBlock Text="🔀"
                                    Classes="template-icon"/>
 
                         <TextBlock Text="Pull Request"
-                                   FontSize="17"
+                                   FontSize="14"
+                                   FontWeight="SemiBold"
+                                   HorizontalAlignment="Center"/>
+
+                    </StackPanel>
+
+                </Button>
+
+                <Button x:Name="DailyButton"
+                        Classes="template"
+                        Tag="Daily"
+                        Click="WorkflowButton_Click">
+
+                    <StackPanel Spacing="4"
+                                HorizontalAlignment="Center">
+
+                        <TextBlock Text="📅"
+                                   Classes="template-icon"/>
+
+                        <TextBlock Text="Daily"
+                                   FontSize="14"
                                    FontWeight="SemiBold"
                                    HorizontalAlignment="Center"/>
 
@@ -615,7 +677,7 @@
         Click="WorkflowButton_Click">
     <StackPanel HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Spacing="10">
+                Spacing="4">
         <TextBlock Text="＋"
                    Classes="template-icon"/>
         <TextBlock Text="Blank Checklist"

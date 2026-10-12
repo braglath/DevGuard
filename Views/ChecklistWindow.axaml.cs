@@ -25,37 +25,33 @@ public partial class ChecklistWindow : Window
       _checklist = new ObservableCollection<ChecklistItem>(checklist);
 
       WorkflowTitle.Text = workTitle;
-      WorkflowDescription.Text = GetWorkflowDescription(workType);
+      WorkflowDescription.Text = FormatTemplateLine(workType, reminder: null);
 
       ChecklistItems.ItemsSource = _checklist;
 
       UpdateProgress();
    }
 
-   private static string GetWorkflowDescription(WorkType workType)
+   private static string FormatTemplateLine(WorkType workType, string? reminder)
    {
-      return workType switch
+      var template = workType switch
       {
-         WorkType.Bug =>
-             "[Bug] Validate, fix, test and verify the issue before release.",
-
-         WorkType.Feature =>
-             "[Feature] Validate requirements, implement, test and verify the new feature.",
-
-         WorkType.Development =>
-             "[Development] Follow development, testing and code review standards.",
-
-         WorkType.Testing =>
-             "[Testing] Validate functionality, regression scenarios and edge cases.",
-
-         WorkType.PullRequest =>
-             "[Pull Request] Review, approve, merge and verify the pull request.",
-
-         WorkType.Blank =>
-             "Create a custom checklist for your work.",
-
+         WorkType.Bug => "Bug Fix",
+         WorkType.Feature => "Feature",
+         WorkType.Development => "Development",
+         WorkType.Testing => "Testing",
+         WorkType.PullRequest => "Pull Request",
+         WorkType.Blank => "Blank Checklist",
+         WorkType.Daily => "Daily",
          _ => string.Empty
       };
+
+      if (string.IsNullOrWhiteSpace(reminder))
+         return template;
+
+      return string.IsNullOrWhiteSpace(template)
+          ? reminder.Trim()
+          : $"{template} · {reminder.Trim()}";
    }
 
    private void UpdateProgress()

@@ -2,9 +2,9 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         x:Class="SuperDev.Views.AddCheckWindow"
         Width="500"
-        Height="680"
+        Height="700"
         MinWidth="450"
-        MinHeight="520"
+        MinHeight="540"
         CanResize="True"
         Title="Add Check"
         Icon="/Assets/app.ico"
@@ -81,6 +81,28 @@
             <Setter Property="Foreground" Value="#93C5FD"/>
         </Style>
 
+        <Style Selector="Button.deadline-clear">
+            <Setter Property="Width" Value="18"/>
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="Button.deadline-clear:pointerover">
+            <Setter Property="Background" Value="#1E2A3F"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+        </Style>
+
         <!-- Combo boxes -->
         <Style Selector="ComboBox.field">
             <Setter Property="Height" Value="44"/>
@@ -139,7 +161,7 @@
       RowSpacing="20">
 
     <Grid Grid.Row="0"
-          RowDefinitions="Auto,Auto,Auto,*"
+          RowDefinitions="Auto,Auto,Auto,Auto,*"
           RowSpacing="18">
 
             <!-- Check -->
@@ -194,8 +216,32 @@
             </StackPanel>
 
 
+            <StackPanel Grid.Row="3"
+                        Orientation="Horizontal"
+                        Spacing="4">
+                <Button x:Name="DeadlineButton"
+                        Content="Pick deadline"
+                        Classes="expand-notes">
+                    <Button.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedLeft"
+                                Opened="DeadlineFlyout_Opened">
+                            <Calendar x:Name="DeadlineCalendar"
+                                      SelectionMode="SingleDate"
+                                      SelectedDatesChanged="DeadlineCalendar_Changed"/>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+                <Button x:Name="ClearDeadlineButton"
+                        Classes="deadline-clear"
+                        Content="×"
+                        ToolTip.Tip="Clear deadline"
+                        IsVisible="False"
+                        Click="ClearDeadline_Click"/>
+            </StackPanel>
+
+
             <!-- Notes -->
-            <Grid Grid.Row="3"
+            <Grid Grid.Row="4"
                   RowDefinitions="Auto,*"
                   RowSpacing="6">
 

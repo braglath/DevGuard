@@ -16,6 +16,11 @@ public class ChecklistItem
 
    public string Notes { get; set; } = string.Empty;
 
+   /// <summary>
+   /// Optional calendar deadline. Missing on older files, and left unset until the user picks one.
+   /// </summary>
+   public DateOnly? Deadline { get; set; }
+
    [JsonIgnore]
    public bool HasNotes =>
        !string.IsNullOrWhiteSpace(Notes);

@@ -1,0 +1,201 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="SuperDev.Views.CopyChecklistWindow"
+        Width="560"
+        Height="640"
+        MinWidth="480"
+        MinHeight="480"
+        CanResize="True"
+        Title="Copy checks"
+        Icon="/Assets/app.ico"
+        Background="#0B1120"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily" Value="Inter, Segoe UI, sans-serif"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+        </Style>
+
+        <Style Selector="TextBlock.dialog-title">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <Style Selector="TextBlock.dialog-message">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style Selector="TextBlock.field-label">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+        </Style>
+
+        <Style Selector="TextBlock.check-label">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="ComboBox.destination">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        </Style>
+
+        <Style Selector="Button.dialog-button">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="MinWidth" Value="100"/>
+            <Setter Property="Padding" Value="20,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.small-button">
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="MinWidth" Value="72"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style Selector="Button.primary:pointerover">
+            <Setter Property="Background" Value="#3B82F6"/>
+        </Style>
+
+        <Style Selector="Button.primary:disabled">
+            <Setter Property="Opacity" Value="0.45"/>
+        </Style>
+
+        <Style Selector="Button.secondary">
+            <Setter Property="Background" Value="#172033"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style Selector="Button.secondary:pointerover">
+            <Setter Property="Background" Value="#1E2A3F"/>
+            <Setter Property="BorderBrush" Value="#3B82F6"/>
+        </Style>
+
+        <Style Selector="Button.secondary:disabled">
+            <Setter Property="Opacity" Value="0.45"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid Margin="30" RowDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto">
+        <TextBlock Grid.Row="0"
+                   Classes="dialog-title"
+                   Text="Copy checks"/>
+
+        <TextBlock Grid.Row="1"
+                   Classes="dialog-message"
+                   Margin="0,12,0,0"
+                   Text="Choose the checks to copy. Then add them to an open checklist, or save them as a new file. This checklist stays as it is."/>
+
+        <Grid Grid.Row="2"
+              Margin="0,16,0,8"
+              ColumnDefinitions="Auto,Auto,*,Auto">
+            <Button Grid.Column="0"
+                    Classes="small-button secondary"
+                    Content="Select all"
+                    Click="SelectAll_Click"/>
+            <Button Grid.Column="1"
+                    Classes="small-button secondary"
+                    Margin="8,0,0,0"
+                    Content="Clear"
+                    Click="Clear_Click"/>
+            <TextBlock x:Name="SelectionCount"
+                       Grid.Column="3"
+                       Classes="field-label"
+                       VerticalAlignment="Center"
+                       Text="0 selected"/>
+        </Grid>
+
+        <Border Grid.Row="3"
+                Background="#0F172A"
+                BorderBrush="#1E293B"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="14">
+            <Grid>
+                <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto">
+                    <StackPanel x:Name="ChecksPanel" Spacing="10"/>
+                </ScrollViewer>
+                <TextBlock x:Name="EmptyChecksText"
+                           Classes="dialog-message"
+                           Text="This checklist has no checks."
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           IsVisible="False"/>
+            </Grid>
+        </Border>
+
+        <TextBlock Grid.Row="4"
+                   Classes="field-label"
+                   Margin="0,16,0,6"
+                   Text="Open checklist"/>
+
+        <ComboBox x:Name="DestinationBox"
+                  Grid.Row="5"
+                  Classes="destination"
+                  SelectionChanged="Destination_SelectionChanged"/>
+
+        <Border x:Name="NoDestinationText"
+                Grid.Row="5"
+                Height="40"
+                Background="#111827"
+                BorderBrush="#334155"
+                BorderThickness="1"
+                CornerRadius="8"
+                Padding="12,0"
+                IsVisible="False">
+            <TextBlock Text="No other checklists are open"
+                       FontSize="14"
+                       Foreground="#94A3B8"
+                       VerticalAlignment="Center"/>
+        </Border>
+
+        <StackPanel Grid.Row="6"
+                    Orientation="Horizontal"
+                    HorizontalAlignment="Right"
+                    Margin="0,16,0,0"
+                    Spacing="10">
+            <Button Classes="dialog-button secondary"
+                    Content="Cancel"
+                    Click="Cancel_Click"/>
+            <Button x:Name="NewFileButton"
+                    Classes="dialog-button secondary"
+                    Content="New file"
+                    IsEnabled="False"
+                    Click="NewFile_Click"/>
+            <Button x:Name="CopyButton"
+                    Classes="dialog-button primary"
+                    Content="Copy"
+                    IsEnabled="False"
+                    Click="Copy_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

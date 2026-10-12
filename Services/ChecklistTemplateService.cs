@@ -15,6 +15,7 @@ public class ChecklistTemplateService
          WorkType.Testing => TestingChecklist(),
          WorkType.PullRequest => PullRequestChecklist(),
          WorkType.Blank =>  new List<ChecklistItem>(),
+         WorkType.Daily => new List<ChecklistItem>(),
          _ => new List<ChecklistItem>()
       };
    }

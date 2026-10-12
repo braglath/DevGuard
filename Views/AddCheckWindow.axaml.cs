@@ -11,6 +11,8 @@ public partial class AddCheckWindow : Window
    private readonly ChecklistItem? _editingItem;
    private double _compactHeight;
    private bool _notesExpanded;
+   private bool _deadlineOpening;
+   private DateOnly? _deadline;
 
    public AddCheckWindow()
    {
@@ -48,6 +50,41 @@ public partial class AddCheckWindow : Window
           (int)item.Priority;
 
       NotesTextBox.Text = item.Notes;
+      _deadline = item.Deadline;
+      ApplyDeadlineLink();
+   }
+
+   private void DeadlineFlyout_Opened(object? sender, EventArgs e)
+   {
+      _deadlineOpening = true;
+      var selected = _deadline is { } date ? DeadlineValue.ToCalendar(date) : (DateTime?)null;
+      DeadlineCalendar.SelectedDate = selected;
+      DeadlineCalendar.DisplayDate = selected ?? DateTime.Today;
+      _deadlineOpening = false;
+   }
+
+   private void DeadlineCalendar_Changed(object? sender, SelectionChangedEventArgs e)
+   {
+      if (_deadlineOpening || DeadlineCalendar.SelectedDate is not { } selected)
+         return;
+
+      _deadline = DeadlineValue.FromCalendar(selected);
+      ApplyDeadlineLink();
+      DeadlineButton.Flyout?.Hide();
+   }
+
+   private void ClearDeadline_Click(object? sender, RoutedEventArgs e)
+   {
+      _deadline = null;
+      ApplyDeadlineLink();
+   }
+
+   private void ApplyDeadlineLink()
+   {
+      DeadlineButton.Content = _deadline is { } date
+          ? $"Deadline: {DeadlineValue.Format(date)}"
+          : "Pick deadline";
+      ClearDeadlineButton.IsVisible = _deadline is not null;
    }
 
    private void SelectComboBoxItem(
@@ -151,6 +188,7 @@ public partial class AddCheckWindow : Window
          Category = category,
          Priority = priority,
          Notes = notes,
+         Deadline = _deadline,
          IsCompleted = _editingItem?.IsCompleted ?? false
       };
 

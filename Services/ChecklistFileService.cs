@@ -16,7 +16,8 @@ public sealed class ChecklistFileService
         Converters =
         {
             new JsonStringEnumConverter(namingPolicy: null, allowIntegerValues: false),
-            new UtcDateTimeJsonConverter()
+            new UtcDateTimeJsonConverter(),
+            new DeadlineDateJsonConverter()
         }
     };
 
@@ -254,6 +255,43 @@ public sealed class ChecklistFileService
                 : DateTime.SpecifyKind(value, DateTimeKind.Utc);
 
             writer.WriteStringValue(utc.ToString(Format, CultureInfo.InvariantCulture));
+        }
+    }
+
+    /// <summary>
+    /// Stores a deadline as yyyy-MM-dd. Also accepts the earlier UTC timestamp form.
+    /// </summary>
+    private sealed class DeadlineDateJsonConverter : JsonConverter<DateOnly>
+    {
+        public override DateOnly Read(
+            ref Utf8JsonReader reader,
+            Type typeToConvert,
+            JsonSerializerOptions options)
+        {
+            var text = reader.GetString();
+            if (string.IsNullOrWhiteSpace(text))
+                throw new JsonException("Deadline must be a date.");
+
+            if (DateOnly.TryParseExact(text, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+                return date;
+
+            if (DateTime.TryParse(text, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var timestamp))
+            {
+                var local = timestamp.Kind == DateTimeKind.Utc
+                    ? timestamp.ToLocalTime()
+                    : timestamp;
+                return DateOnly.FromDateTime(local);
+            }
+
+            throw new JsonException("Deadline must be a date.");
+        }
+
+        public override void Write(
+            Utf8JsonWriter writer,
+            DateOnly value,
+            JsonSerializerOptions options)
+        {
+            writer.WriteStringValue(value.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
         }
     }
 }

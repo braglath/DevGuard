@@ -1,12 +1,15 @@
 
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Threading;
 using Avalonia.VisualTree;
 using SuperDev.Models;
@@ -45,12 +48,19 @@ public partial class ChecklistView : UserControl
    private readonly ObservableCollection<ChecklistItem> _visible = new();
    private bool _viewReady;
    private bool _detailsOpen;
+   private bool _filtersVisible = true;
+   private bool _headerDetailsVisible = true;
+   private bool _deadlineOpening;
    private TopLevel? _inputRoot;
    public string WorkTitle { get; private set; }
 
    public string BranchName { get; private set; }
 
+   public string RepositoryUrl { get; private set; }
+
    public string PullRequestUrl { get; private set; }
+
+   public DateOnly? Deadline { get; private set; }
 
    public WorkType WorkType => _workType;
 
@@ -64,6 +74,8 @@ public partial class ChecklistView : UserControl
 
    public event EventHandler? SaveAsRequested;
 
+   public event EventHandler? CopyRequested;
+
    public bool HasIncompleteRequiredChecks() =>
        _checklist.Any(item =>
            !item.IsCompleted &&
@@ -74,7 +86,9 @@ public partial class ChecklistView : UserControl
        WorkType workType,
        string workTitle,
        string branchName,
+       string repositoryUrl,
        string pullRequestUrl,
+       DateOnly? deadline,
        List<ChecklistItem> checklist)
    {
       InitializeComponent();
@@ -82,16 +96,21 @@ public partial class ChecklistView : UserControl
       _workType = workType;
       WorkTitle = workTitle;
       BranchName = branchName;
+      RepositoryUrl = repositoryUrl;
       PullRequestUrl = pullRequestUrl;
+      Deadline = deadline;
       _checklist = new ObservableCollection<ChecklistItem>(checklist);
 
       WorkflowTitleBox.Text = workTitle;
       BranchNameBox.Text = branchName;
+      RepositoryBox.Text = repositoryUrl;
       PullRequestBox.Text = pullRequestUrl;
+      OpenRepositoryButton.IsEnabled = ExternalLink.CanOpen(repositoryUrl);
       _detailsOpen = !string.IsNullOrWhiteSpace(branchName) ||
+                     !string.IsNullOrWhiteSpace(repositoryUrl) ||
                      !string.IsNullOrWhiteSpace(pullRequestUrl);
       ApplyDetailsVisibility();
-      WorkflowDescription.Text = GetWorkflowDescription(workType);
+      UpdateDeadlinePresentation();
       ChecklistItems.ItemsSource = _visible;
 
       StatusFilterBox.SelectedIndex = 0;
@@ -103,24 +122,138 @@ public partial class ChecklistView : UserControl
       UpdateProgress();
    }
 
-   private static string GetWorkflowDescription(WorkType workType)
+   private static string FormatTemplateLine(WorkType workType, string? reminder)
    {
-      return workType switch
+      var template = workType switch
       {
-         WorkType.Bug =>
-             "[Bug] Validate, fix, test and verify the issue before release.",
-         WorkType.Feature =>
-             "[Feature] Validate requirements, implement, test and verify the new feature.",
-         WorkType.Development =>
-             "[Development] Follow development, testing and code review standards.",
-         WorkType.Testing =>
-             "[Testing] Validate functionality, regression scenarios and edge cases.",
-         WorkType.PullRequest =>
-             "[Pull Request] Review, approve, merge and verify the pull request.",
-         WorkType.Blank =>
-             "Create a custom checklist for your work.",
+         WorkType.Bug => "Bug Fix",
+         WorkType.Feature => "Feature",
+         WorkType.Development => "Development",
+         WorkType.Testing => "Testing",
+         WorkType.PullRequest => "Pull Request",
+         WorkType.Blank => "Blank Checklist",
+         WorkType.Daily => "Daily",
          _ => string.Empty
       };
+
+      if (string.IsNullOrWhiteSpace(reminder))
+         return template;
+
+      return string.IsNullOrWhiteSpace(template)
+          ? reminder.Trim()
+          : $"{template} · {reminder.Trim()}";
+   }
+
+   private void UpdateDeadlinePresentation()
+   {
+      WorkflowDescription.Text = FormatTemplateLine(_workType, reminder: null);
+      ApplyDeadlineLink(DeadlineButton, Deadline);
+   }
+
+   private void DeadlineFlyout_Opened(object? sender, EventArgs e) =>
+       ShowDeadlineCalendar(DeadlineCalendar, Deadline);
+
+   private void DeadlineCalendar_Changed(object? sender, SelectionChangedEventArgs e)
+   {
+      if (_deadlineOpening || DeadlineCalendar.SelectedDate is not { } selected)
+         return;
+
+      var next = DeadlineValue.FromCalendar(selected);
+      DeadlineButton.Flyout?.Hide();
+
+      if (Deadline == next)
+         return;
+
+      Deadline = next;
+      UpdateDeadlinePresentation();
+      DocumentEdited?.Invoke(this, EventArgs.Empty);
+   }
+
+   private void ClearDeadline_Click(object? sender, RoutedEventArgs e)
+   {
+      if (Deadline is null)
+         return;
+
+      Deadline = null;
+      UpdateDeadlinePresentation();
+      DocumentEdited?.Invoke(this, EventArgs.Empty);
+   }
+
+   private void ItemDeadlineLink_Loaded(object? sender, RoutedEventArgs e)
+   {
+      if (sender is Button button && button.DataContext is ChecklistItem item)
+         ApplyDeadlineLink(button, item.Deadline);
+   }
+
+   private void ItemDeadlineFlyout_Opened(object? sender, EventArgs e)
+   {
+      if (sender is not Flyout flyout || flyout.Content is not Calendar calendar)
+         return;
+
+      var deadline = flyout.Target?.DataContext is ChecklistItem item
+          ? item.Deadline
+          : null;
+      ShowDeadlineCalendar(calendar, deadline);
+   }
+
+   private void ItemDeadlineCalendar_Changed(object? sender, SelectionChangedEventArgs e)
+   {
+      if (_deadlineOpening || sender is not Calendar calendar || calendar.SelectedDate is not { } selected)
+         return;
+
+      if (calendar.FindAncestorOfType<Popup>()?.PlacementTarget is not Button button ||
+          button.DataContext is not ChecklistItem item)
+         return;
+
+      var next = DeadlineValue.FromCalendar(selected);
+      button.Flyout?.Hide();
+
+      if (item.Deadline == next)
+         return;
+
+      item.Deadline = next;
+      ApplyDeadlineLink(button, next);
+      MarkEdited();
+   }
+
+   private void ClearItemDeadline_Click(object? sender, RoutedEventArgs e)
+   {
+      if (sender is not Button clear || clear.DataContext is not ChecklistItem item || item.Deadline is null)
+         return;
+
+      if (clear.Parent is not Panel panel)
+         return;
+
+      var link = panel.Children.OfType<Button>().FirstOrDefault(button => button != clear);
+      if (link is null)
+         return;
+
+      item.Deadline = null;
+      ApplyDeadlineLink(link, null);
+      MarkEdited();
+   }
+
+   private void ShowDeadlineCalendar(Calendar calendar, DateOnly? deadline)
+   {
+      _deadlineOpening = true;
+      var selected = deadline is { } date ? DeadlineValue.ToCalendar(date) : (DateTime?)null;
+      calendar.SelectedDate = selected;
+      calendar.DisplayDate = selected ?? DateTime.Today;
+      _deadlineOpening = false;
+   }
+
+   private static void ApplyDeadlineLink(Button link, DateOnly? deadline)
+   {
+      link.Content = deadline is { } date
+          ? $"Deadline: {DeadlineValue.Format(date)}"
+          : "Pick deadline";
+
+      if (link.Parent is not Panel panel)
+         return;
+
+      var clear = panel.Children.OfType<Button>().FirstOrDefault(button => button != link);
+      if (clear is not null)
+         clear.IsVisible = deadline is not null;
    }
 
    private void UpdateProgress()
@@ -145,6 +278,9 @@ public partial class ChecklistView : UserControl
 
       item.IsCompleted = checkBox.IsChecked == true;
 
+      if (item.IsCompleted)
+         SuperDev.SuccessSound.PlayCheck();
+
       MarkEdited();
    }
 
@@ -153,6 +289,51 @@ public partial class ChecklistView : UserControl
 
    private void SaveAs_Click(object? sender, RoutedEventArgs e) =>
        SaveAsRequested?.Invoke(this, EventArgs.Empty);
+
+   private void Copy_Click(object? sender, RoutedEventArgs e) =>
+       CopyRequested?.Invoke(this, EventArgs.Empty);
+
+   public int RemoveItems(IReadOnlyList<ChecklistItem> items)
+   {
+      var removed = 0;
+      foreach (var item in items)
+      {
+         if (_checklist.Remove(item))
+            removed++;
+      }
+
+      if (removed > 0)
+         MarkEdited();
+
+      return removed;
+   }
+
+   public int AppendCopies(IReadOnlyList<ChecklistItem> items)
+   {
+      var added = 0;
+      foreach (var item in items)
+      {
+         _checklist.Insert(added, CopyItem(item));
+         added++;
+      }
+
+      if (added > 0)
+         MarkEdited();
+
+      return added;
+   }
+
+   private static ChecklistItem CopyItem(ChecklistItem item) =>
+       new()
+       {
+          Id = Guid.NewGuid(),
+          Title = item.Title,
+          Category = item.Category,
+          Priority = item.Priority,
+          Notes = item.Notes,
+          Deadline = item.Deadline,
+          IsCompleted = item.IsCompleted
+       };
 
    private void MarkEdited()
    {
@@ -213,6 +394,9 @@ public partial class ChecklistView : UserControl
       if (BranchNameBox.IsFocused)
          return BranchNameBox;
 
+      if (RepositoryBox.IsFocused)
+         return RepositoryBox;
+
       if (PullRequestBox.IsFocused)
          return PullRequestBox;
 
@@ -223,6 +407,7 @@ public partial class ChecklistView : UserControl
    {
       CommitTitle();
       CommitBranch();
+      CommitRepository();
       CommitPullRequest();
    }
 
@@ -234,12 +419,18 @@ public partial class ChecklistView : UserControl
       _detailsOpen = true;
       DetailsPanel.IsVisible = true;
       AddDetailsButton.IsVisible = false;
-      BranchNameBox.Focus();
+      RepositoryBox.Focus();
    }
 
    private void Branch_LostFocus(object? sender, RoutedEventArgs e)
    {
       CommitBranch();
+      ScheduleDetailsRefresh();
+   }
+
+   private void Repository_LostFocus(object? sender, RoutedEventArgs e)
+   {
+      CommitRepository();
       ScheduleDetailsRefresh();
    }
 
@@ -256,8 +447,11 @@ public partial class ChecklistView : UserControl
    {
       var hasDetails =
           !string.IsNullOrWhiteSpace(BranchName) ||
+          !string.IsNullOrWhiteSpace(RepositoryUrl) ||
           !string.IsNullOrWhiteSpace(PullRequestUrl);
-      var editing = BranchNameBox.IsFocused || PullRequestBox.IsFocused;
+      var editing = BranchNameBox.IsFocused ||
+                    RepositoryBox.IsFocused ||
+                    PullRequestBox.IsFocused;
 
       if (hasDetails || editing)
          _detailsOpen = true;
@@ -266,6 +460,24 @@ public partial class ChecklistView : UserControl
 
       DetailsPanel.IsVisible = _detailsOpen;
       AddDetailsButton.IsVisible = !_detailsOpen;
+   }
+
+   private void Repository_TextChanged(object? sender, TextChangedEventArgs e) =>
+       OpenRepositoryButton.IsEnabled = ExternalLink.CanOpen(RepositoryBox.Text);
+
+   private async void OpenRepository_Click(object? sender, RoutedEventArgs e)
+   {
+      CommitRepository();
+
+      if (ExternalLink.TryOpen(RepositoryUrl))
+         return;
+
+      var owner = GetOwnerWindow();
+      if (owner is null)
+         return;
+
+      var dialog = new StyledDialog("Super Dev", "That repository link could not be opened.");
+      await dialog.ShowDialog(owner);
    }
 
    private void PullRequest_TextChanged(object? sender, TextChangedEventArgs e) =>
@@ -320,6 +532,21 @@ public partial class ChecklistView : UserControl
       DocumentEdited?.Invoke(this, EventArgs.Empty);
    }
 
+   private void CommitRepository()
+   {
+      var url = RepositoryBox.Text?.Trim() ?? string.Empty;
+      if (RepositoryBox.Text != url)
+         RepositoryBox.Text = url;
+
+      OpenRepositoryButton.IsEnabled = ExternalLink.CanOpen(url);
+
+      if (url == RepositoryUrl)
+         return;
+
+      RepositoryUrl = url;
+      DocumentEdited?.Invoke(this, EventArgs.Empty);
+   }
+
    private void CommitPullRequest()
    {
       var url = PullRequestBox.Text?.Trim() ?? string.Empty;
@@ -340,6 +567,57 @@ public partial class ChecklistView : UserControl
 
    private void View_Changed(object? sender, SelectionChangedEventArgs e) =>
        ApplyView();
+
+   /// <summary>
+   /// Shows or hides the template line, repository, branch, and PR fields.
+   /// The title and progress stay visible. A later interface-density setting can call this.
+   /// </summary>
+   public void SetHeaderDetailsVisible(bool visible)
+   {
+      if (!visible)
+         CommitDetails();
+
+      _headerDetailsVisible = visible;
+      HeaderDetails.IsVisible = visible;
+
+      if (visible)
+      {
+         HeaderPanel.Classes.Remove("compact");
+         HeaderToggleButton.Classes.Add("selected");
+         ApplyDetailsVisibility();
+      }
+      else
+      {
+         HeaderPanel.Classes.Add("compact");
+         HeaderToggleButton.Classes.Remove("selected");
+      }
+
+      HeaderToggleIcon.Data = Geometry.Parse(visible
+          ? "M1,10 L7,4 L13,10"
+          : "M1,4 L7,10 L13,4");
+      ToolTip.SetTip(HeaderToggleButton, visible ? "Hide details" : "Show details");
+   }
+
+   private void HeaderToggle_Click(object? sender, RoutedEventArgs e) =>
+       SetHeaderDetailsVisible(!_headerDetailsVisible);
+
+   /// <summary>
+   /// Shows or hides search, status, priority, and sort.
+   /// A later interface-density setting can call this.
+   /// </summary>
+   public void SetFilterSectionVisible(bool visible)
+   {
+      _filtersVisible = visible;
+      FiltersPanel.IsVisible = visible;
+      ChecklistBody.RowSpacing = visible ? 14 : 0;
+      FilterToggleButton.Content = visible ? "Hide filters" : "Show filters";
+
+      if (_viewReady)
+         ApplyView();
+   }
+
+   private void FilterToggle_Click(object? sender, RoutedEventArgs e) =>
+       SetFilterSectionVisible(!_filtersVisible);
 
    private void ResetView_Click(object? sender, RoutedEventArgs e)
    {
@@ -363,7 +641,9 @@ public partial class ChecklistView : UserControl
          matches = matches.Where(entry =>
              entry.item.Title.Contains(search, StringComparison.OrdinalIgnoreCase) ||
              entry.item.Category.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-             entry.item.Notes.Contains(search, StringComparison.OrdinalIgnoreCase));
+             entry.item.Notes.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+             (entry.item.Deadline is { } deadline &&
+              DeadlineValue.Format(deadline).Contains(search, StringComparison.OrdinalIgnoreCase)));
       }
 
       matches = (StatusFilter)StatusFilterBox.SelectedIndex switch
@@ -414,8 +694,11 @@ public partial class ChecklistView : UserControl
    {
       var total = _checklist.Count;
       var narrowed = HasSearchOrFilter();
-      ViewCountText.Text = narrowed ? $"{shown} of {total}" : string.Empty;
-      ViewCountText.IsVisible = narrowed;
+      var count = narrowed ? $"{shown} of {total}" : string.Empty;
+      ViewCountText.Text = count;
+      ViewCountText.IsVisible = narrowed && _filtersVisible;
+      CollapsedCountText.Text = count;
+      CollapsedCountText.IsVisible = narrowed && !_filtersVisible;
       EmptyFilterText.IsVisible = total > 0 && shown == 0;
 
       if (SortBox.SelectedIndex <= 0 && shown > 1)
@@ -467,7 +750,15 @@ public partial class ChecklistView : UserControl
       _visible.Insert(index, item);
    }
 
-   private async void AddCheck_Click(object? sender, RoutedEventArgs e)
+   private void AddCheck_Click(object? sender, RoutedEventArgs e) =>
+       AddCheck();
+
+   public void AddCheck()
+   {
+      _ = AddCheckAsync();
+   }
+
+   private async Task AddCheckAsync()
    {
       var owner = GetOwnerWindow();
       if (owner is null)
@@ -479,7 +770,7 @@ public partial class ChecklistView : UserControl
       if (result is null)
          return;
 
-      _checklist.Add(result);
+      _checklist.Insert(0, result);
       MarkEdited();
    }
 
@@ -518,6 +809,7 @@ public partial class ChecklistView : UserControl
       item.Category = result.Category;
       item.Priority = result.Priority;
       item.Notes = result.Notes;
+      item.Deadline = result.Deadline;
       item.IsCompleted = result.IsCompleted;
 
       MarkEdited();
@@ -549,6 +841,56 @@ public partial class ChecklistView : UserControl
       _checklist.Remove(item);
       MarkEdited();
    }
+
+   private void DeleteChecks_Click(object? sender, RoutedEventArgs e) =>
+       DeleteChecks();
+
+   public void DeleteChecks()
+   {
+      _ = DeleteChecksAsync();
+   }
+
+   private async Task DeleteChecksAsync()
+   {
+      var owner = GetOwnerWindow();
+      if (owner is null)
+         return;
+
+      var checks = _checklist.ToList();
+      var picker = new DeleteChecksWindow(checks.Select(CopyItemLabel).ToList());
+      var indexes = await picker.ShowDialog<List<int>?>(owner);
+      if (indexes is null || indexes.Count == 0)
+         return;
+
+      var selected = indexes
+          .Where(index => index >= 0 && index < checks.Count)
+          .Distinct()
+          .Select(index => checks[index])
+          .ToList();
+      if (selected.Count == 0)
+         return;
+
+      var message = selected.Count == 1
+          ? $"Are you sure you want to remove \"{selected[0].Title}\"?"
+          : $"Are you sure you want to remove these {selected.Count} checks?";
+
+      var confirm = new StyledDialog(
+          "Remove checklist items?",
+          message,
+          "Remove",
+          "Cancel",
+          danger: true);
+
+      if (!await confirm.ShowDialog<bool>(owner))
+         return;
+
+      RemoveItems(selected);
+   }
+
+   private static string CopyItemLabel(ChecklistItem item) =>
+       string.IsNullOrWhiteSpace(item.Detail)
+           ? item.Title
+           : $"{item.Title} — {item.Detail}";
 
    private async void Complete_Click(object? sender, RoutedEventArgs e)
    {

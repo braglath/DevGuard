@@ -15,9 +15,16 @@ public sealed class ChecklistDocument
 
     public string BranchName { get; set; } = string.Empty;
 
+    public string RepositoryUrl { get; set; } = string.Empty;
+
     public string PullRequestUrl { get; set; } = string.Empty;
 
     public WorkType WorkType { get; set; }
+
+    /// <summary>
+    /// Optional calendar deadline. Missing on older files, and left unset until the user picks one.
+    /// </summary>
+    public DateOnly? Deadline { get; set; }
 
     /// <summary>
     /// UTC timestamp from when the document was first created. Saves do not change it.
