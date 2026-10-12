@@ -4,9 +4,9 @@ using System.IO;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using DevGuard.Models;
+using SuperDev.Models;
 
-namespace DevGuard.Services;
+namespace SuperDev.Services;
 
 public sealed class ChecklistFileService
 {
@@ -138,7 +138,7 @@ public sealed class ChecklistFileService
         catch (JsonException ex)
         {
             throw new ChecklistFileException(
-                "This file isn't a valid DevGuard checklist.",
+                "This file isn't a valid Super Dev checklist.",
                 ex);
         }
 
@@ -147,7 +147,7 @@ public sealed class ChecklistFileService
             if (parsed.RootElement.ValueKind != JsonValueKind.Object)
             {
                 throw new ChecklistFileException(
-                    "This file isn't a valid DevGuard checklist.");
+                    "This file isn't a valid Super Dev checklist.");
             }
 
             foreach (var name in RequiredProperties)
@@ -169,14 +169,14 @@ public sealed class ChecklistFileService
         catch (JsonException ex)
         {
             throw new ChecklistFileException(
-                "This file isn't a valid DevGuard checklist.",
+                "This file isn't a valid Super Dev checklist.",
                 ex);
         }
 
         if (document is null)
         {
             throw new ChecklistFileException(
-                "This file isn't a valid DevGuard checklist.");
+                "This file isn't a valid Super Dev checklist.");
         }
 
         Validate(document);
@@ -189,7 +189,7 @@ public sealed class ChecklistFileService
         {
             throw new ChecklistFileException(
                 $"This file uses checklist format version {document.FormatVersion}. " +
-                $"DevGuard opens version {ChecklistDocument.CurrentFormatVersion}.");
+                $"Super Dev opens version {ChecklistDocument.CurrentFormatVersion}.");
         }
 
         if (document.Id == Guid.Empty)

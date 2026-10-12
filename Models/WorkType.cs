@@ -1,4 +1,4 @@
-namespace DevGuard.Models
+namespace SuperDev.Models
 {
    public enum WorkType
    {

@@ -27,7 +27,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore DevGuard.csproj
+        run: dotnet restore SuperDev.csproj
 
       - name: Publish Windows x64
         shell: pwsh
@@ -38,7 +38,7 @@ jobs:
             throw "Tag '$tag' is not a version like v1.1.0"
           }
           $version = $tag.Substring(1)
-          dotnet publish DevGuard.csproj `
+          dotnet publish SuperDev.csproj `
             -c Release `
             -r win-x64 `
             --self-contained true `
@@ -53,15 +53,15 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $tag = "${{ github.ref_name }}"
           $publishDir = Join-Path (Get-Location) "publish/win-x64"
-          $exe = Join-Path $publishDir "DevGuard.exe"
+          $exe = Join-Path $publishDir "Super Dev.exe"
           if (-not (Test-Path -LiteralPath $exe)) {
             throw "Publish did not produce $exe"
           }
           if ((Get-Item -LiteralPath $exe).Length -le 0) {
-            throw "DevGuard.exe is empty"
+            throw "Super Dev.exe is empty"
           }
 
-          $zip = Join-Path (Get-Location) "DevGuard-$tag-win-x64.zip"
+          $zip = Join-Path (Get-Location) "Super Dev-$tag-win-x64.zip"
           if (Test-Path -LiteralPath $zip) {
             Remove-Item -LiteralPath $zip
           }
@@ -73,9 +73,9 @@ jobs:
           Add-Type -AssemblyName System.IO.Compression.FileSystem
           $archive = [System.IO.Compression.ZipFile]::OpenRead((Resolve-Path -LiteralPath $zip))
           try {
-            $entry = $archive.Entries | Where-Object { $_.Name -eq 'DevGuard.exe' }
+            $entry = $archive.Entries | Where-Object { $_.Name -eq 'Super Dev.exe' }
             if (-not $entry) {
-              throw "ZIP does not contain DevGuard.exe"
+              throw "ZIP does not contain Super Dev.exe"
             }
           }
           finally {
@@ -85,8 +85,8 @@ jobs:
       - name: Upload Windows package
         uses: actions/upload-artifact@v4
         with:
-          name: DevGuard-${{ github.ref_name }}-win-x64
-          path: DevGuard-${{ github.ref_name }}-win-x64.zip
+          name: Super Dev-${{ github.ref_name }}-win-x64
+          path: Super Dev-${{ github.ref_name }}-win-x64.zip
           if-no-files-found: error
 
   build-macos:
@@ -109,7 +109,7 @@ jobs:
           dotnet-version: '10.0.x'
 
       - name: Restore
-        run: dotnet restore DevGuard.csproj
+        run: dotnet restore SuperDev.csproj
 
       - name: Publish macOS
         shell: bash
@@ -124,7 +124,7 @@ jobs:
           version="${tag#v}"
           # Keep native Avalonia libraries as files beside the executable.
           # A single-file binary does not produce a launchable .app bundle.
-          dotnet publish DevGuard.csproj \
+          dotnet publish SuperDev.csproj \
             -c Release \
             -r "$rid" \
             --self-contained true \
@@ -132,8 +132,8 @@ jobs:
             -p:PublishSingleFile=false \
             -p:Version="$version" \
             -o "publish/$rid"
-          [[ -s "publish/$rid/DevGuard" ]] || {
-            echo "Publish did not produce publish/$rid/DevGuard" >&2
+          [[ -s "publish/$rid/Super Dev" ]] || {
+            echo "Publish did not produce publish/$rid/Super Dev" >&2
             exit 1
           }
 
@@ -145,13 +145,13 @@ jobs:
             --rid "${{ matrix.rid }}" \
             --tag "${{ github.ref_name }}" \
             --publish-dir "publish/${{ matrix.rid }}" \
-            --output "DevGuard-${{ github.ref_name }}-${{ matrix.rid }}.dmg"
+            --output "Super Dev-${{ github.ref_name }}-${{ matrix.rid }}.dmg"
 
       - name: Upload macOS package
         uses: actions/upload-artifact@v4
         with:
-          name: DevGuard-${{ github.ref_name }}-${{ matrix.rid }}
-          path: DevGuard-${{ github.ref_name }}-${{ matrix.rid }}.dmg
+          name: Super Dev-${{ github.ref_name }}-${{ matrix.rid }}
+          path: Super Dev-${{ github.ref_name }}-${{ matrix.rid }}.dmg
           if-no-files-found: error
 
   publish-release:
@@ -177,9 +177,9 @@ jobs:
           tag="${{ github.ref_name }}"
           cd release-assets
           assets=(
-            "DevGuard-${tag}-win-x64.zip"
-            "DevGuard-${tag}-osx-arm64.dmg"
-            "DevGuard-${tag}-osx-x64.dmg"
+            "Super Dev-${tag}-win-x64.zip"
+            "Super Dev-${tag}-osx-arm64.dmg"
+            "Super Dev-${tag}-osx-x64.dmg"
           )
           for asset in "${assets[@]}"; do
             if [[ ! -s "$asset" ]]; then
@@ -198,9 +198,9 @@ jobs:
           tag="${{ github.ref_name }}"
           cd release-assets
           assets=(
-            "DevGuard-${tag}-win-x64.zip"
-            "DevGuard-${tag}-osx-arm64.dmg"
-            "DevGuard-${tag}-osx-x64.dmg"
+            "Super Dev-${tag}-win-x64.zip"
+            "Super Dev-${tag}-osx-arm64.dmg"
+            "Super Dev-${tag}-osx-x64.dmg"
           )
           if gh release view "$tag" >/dev/null 2>&1; then
             echo "Release $tag already exists. Adding the packages to that release."
@@ -208,7 +208,7 @@ jobs:
           else
             gh release create "$tag" \
               "${assets[@]}" \
-              --title "DevGuard $tag" \
+              --title "Super Dev $tag" \
               --generate-notes
           fi
 
@@ -221,9 +221,9 @@ jobs:
           set -euo pipefail
           tag="${{ github.ref_name }}"
           expected=(
-            "DevGuard-${tag}-win-x64.zip"
-            "DevGuard-${tag}-osx-arm64.dmg"
-            "DevGuard-${tag}-osx-x64.dmg"
+            "Super Dev-${tag}-win-x64.zip"
+            "Super Dev-${tag}-osx-arm64.dmg"
+            "Super Dev-${tag}-osx-x64.dmg"
           )
           mapfile -t published < <(gh release view "$tag" --json assets --jq '.assets[].name' | sort)
           printf '%s\n' "${published[@]}"

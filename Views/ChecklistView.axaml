@@ -1,7 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:models="using:DevGuard.Models"
-             x:Class="DevGuard.Views.ChecklistView">
+             xmlns:models="using:SuperDev.Models"
+             xmlns:controls="using:SuperDev.Controls"
+             x:Class="SuperDev.Views.ChecklistView">
 
     <UserControl.Styles>
 
@@ -14,15 +15,54 @@
         </Style>
 
         <!-- Header -->
-        <Style Selector="TextBlock.page-title">
+        <Style Selector="TextBox.page-title">
             <Setter Property="FontSize" Value="24"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="Padding" Value="0,0,4,2"/>
+            <Setter Property="MinHeight" Value="40"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="PlaceholderForeground" Value="#64748B"/>
+            <Setter Property="(controls:TextBoxClearButton.WhenFocused)" Value="True"/>
+        </Style>
+
+        <Style Selector="TextBox.page-title:pointerover">
+            <Setter Property="BorderBrush" Value="#334155"/>
+        </Style>
+
+        <Style Selector="TextBox.page-title:focus">
+            <Setter Property="BorderBrush" Value="#3B82F6"/>
         </Style>
 
         <Style Selector="TextBlock.page-subtitle">
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="Foreground" Value="#94A3B8"/>
+        </Style>
+
+        <Style Selector="TextBlock.meta-label">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+        </Style>
+
+        <Style Selector="TextBox.meta">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="PlaceholderForeground" Value="#64748B"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="TextBox.meta:focus">
+            <Setter Property="BorderBrush" Value="#3B82F6"/>
         </Style>
 
         <!-- Progress -->
@@ -125,6 +165,16 @@
             <Setter Property="Foreground" Value="#F87171"/>
         </Style>
 
+        <Style Selector="Button.icon.move">
+            <Setter Property="Width" Value="28"/>
+            <Setter Property="Height" Value="28"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+
+        <Style Selector="ItemsControl:not(.reorder) Button.icon.move">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+
         <!-- Completed -->
         <Style Selector="Border.check-item.completed">
             <Setter Property="Opacity" Value="0.55"/>
@@ -142,6 +192,71 @@
     <Setter Property="TextWrapping" Value="Wrap"/>
 </Style>
 
+        <Style Selector="Button.notes-link">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#60A5FA"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="Button.notes-link:pointerover">
+            <Setter Property="Foreground" Value="#93C5FD"/>
+        </Style>
+
+        <Style Selector="TextBox.search">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="PlaceholderForeground" Value="#64748B"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="TextBox.search:focus">
+            <Setter Property="BorderBrush" Value="#3B82F6"/>
+        </Style>
+
+        <Style Selector="ComboBox.filter">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        </Style>
+
+        <Style Selector="TextBlock.filter-label">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+        </Style>
+
+        <Style Selector="TextBlock.view-count">
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="TextAlignment" Value="Right"/>
+        </Style>
+
+        <Style Selector="TextBlock.empty-filter">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
     </UserControl.Styles>
 
 
@@ -150,40 +265,87 @@
           RowSpacing="24">
 
         <!-- HEADER -->
-        <Grid Grid.Row="0"
-              ColumnDefinitions="*,Auto"
-              ColumnSpacing="30">
+        <StackPanel Grid.Row="0"
+                    Spacing="6">
 
-            <StackPanel Grid.Column="0"
-                        Spacing="6">
+            <Grid ColumnDefinitions="*,Auto"
+                  ColumnSpacing="24">
 
-                <TextBlock x:Name="WorkflowTitle"
-                           Classes="page-title"/>
+                <TextBox x:Name="WorkflowTitleBox"
+                         Classes="page-title"
+                         PlaceholderText="Work title"
+                         VerticalAlignment="Center"
+                         LostFocus="Title_LostFocus"/>
 
-                <TextBlock x:Name="WorkflowDescription"
-           Classes="page-subtitle"/>
+                <StackPanel Grid.Column="1"
+                            Width="220"
+                            Spacing="8"
+                            VerticalAlignment="Center">
 
-            </StackPanel>
+                    <TextBlock x:Name="ProgressText"
+                               Classes="progress-text"
+                               HorizontalAlignment="Right"/>
 
+                    <ProgressBar x:Name="ProgressBar"
+                                 Classes="progress"
+                                 Minimum="0"
+                                 Maximum="100"/>
 
-            <!-- Progress -->
-            <StackPanel Grid.Column="1"
-                        Width="220"
-                        Spacing="8"
-                        VerticalAlignment="Center">
+                </StackPanel>
 
-                <TextBlock x:Name="ProgressText"
-                           Classes="progress-text"
-                           HorizontalAlignment="Right"/>
+            </Grid>
 
-                <ProgressBar x:Name="ProgressBar"
-                             Classes="progress"
-                             Minimum="0"
-                             Maximum="100"/>
+            <TextBlock x:Name="WorkflowDescription"
+                       Classes="page-subtitle"/>
 
-            </StackPanel>
+            <Button x:Name="AddDetailsButton"
+                    Content="Add branch and PR"
+                    Classes="notes-link"
+                    Margin="0,10,0,0"
+                    HorizontalAlignment="Left"
+                    IsVisible="False"
+                    Click="AddDetails_Click"/>
 
-        </Grid>
+                <Grid x:Name="DetailsPanel"
+                      ColumnDefinitions="*,*"
+                      ColumnSpacing="12"
+                      Margin="0,10,0,0"
+                      IsVisible="False">
+
+                    <StackPanel Spacing="4">
+                        <TextBlock Text="Branch name"
+                                   Classes="meta-label"/>
+                        <TextBox x:Name="BranchNameBox"
+                                 Classes="meta"
+                                 PlaceholderText="feature/my-change"
+                                 LostFocus="Branch_LostFocus"/>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1"
+                                Spacing="4">
+                        <TextBlock Text="PR link"
+                                   Classes="meta-label"/>
+                        <Grid ColumnDefinitions="*,Auto"
+                              ColumnSpacing="8">
+                            <TextBox x:Name="PullRequestBox"
+                                     Classes="meta"
+                                     PlaceholderText="https://github.com/.../pull/1"
+                                     TextChanged="PullRequest_TextChanged"
+                                     LostFocus="PullRequest_LostFocus"/>
+                            <Button x:Name="OpenPullRequestButton"
+                                    Grid.Column="1"
+                                    Content="Open"
+                                    Classes="action secondary"
+                                    Height="36"
+                                    Padding="12,0"
+                                    IsEnabled="False"
+                                    Click="OpenPullRequest_Click"/>
+                        </Grid>
+                    </StackPanel>
+
+                </Grid>
+
+        </StackPanel>
 
 
         <!-- ACTION BAR -->
@@ -222,6 +384,82 @@
                 CornerRadius="12"
                 Padding="18">
 
+            <Grid RowDefinitions="Auto,*"
+                  RowSpacing="14">
+
+                <Grid Grid.Row="0"
+                      ColumnDefinitions="*,130,150,150,Auto,Auto"
+                      ColumnSpacing="8">
+
+                    <TextBox x:Name="SearchTextBox"
+                             Classes="search"
+                             PlaceholderText="Search checklist"
+                             VerticalAlignment="Bottom"
+                             TextChanged="Search_TextChanged"/>
+
+                    <StackPanel Grid.Column="1"
+                                Spacing="4">
+                        <TextBlock Text="Status"
+                                   Classes="filter-label"/>
+                        <ComboBox x:Name="StatusFilterBox"
+                                  Classes="filter"
+                                  SelectionChanged="View_Changed">
+                            <ComboBoxItem Content="Any status"/>
+                            <ComboBoxItem Content="Open"/>
+                            <ComboBoxItem Content="Completed"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="2"
+                                Spacing="4">
+                        <TextBlock Text="Priority"
+                                   Classes="filter-label"/>
+                        <ComboBox x:Name="PriorityFilterBox"
+                                  Classes="filter"
+                                  SelectionChanged="View_Changed">
+                            <ComboBoxItem Content="Any priority"/>
+                            <ComboBoxItem Content="Critical"/>
+                            <ComboBoxItem Content="Required"/>
+                            <ComboBoxItem Content="Conditional"/>
+                            <ComboBoxItem Content="Review"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="3"
+                                Spacing="4">
+                        <TextBlock Text="Sort by"
+                                   Classes="filter-label"/>
+                        <ComboBox x:Name="SortBox"
+                                  Classes="filter"
+                                  SelectionChanged="View_Changed">
+                            <ComboBoxItem Content="Checklist order"/>
+                            <ComboBoxItem Content="Priority"/>
+                            <ComboBoxItem Content="Category"/>
+                            <ComboBoxItem Content="Title"/>
+                        </ComboBox>
+                    </StackPanel>
+
+                    <Button x:Name="ResetViewButton"
+                            Grid.Column="4"
+                            Content="Reset"
+                            Classes="action secondary"
+                            Height="36"
+                            Padding="12,0"
+                            VerticalAlignment="Bottom"
+                            Click="ResetView_Click"/>
+
+                    <Border Grid.Column="5"
+                            Height="36"
+                            VerticalAlignment="Bottom">
+                        <TextBlock x:Name="ViewCountText"
+                                   Classes="view-count"
+                                   IsVisible="False"/>
+                    </Border>
+
+                </Grid>
+
+            <Grid Grid.Row="1">
+
             <ScrollViewer VerticalScrollBarVisibility="Auto">
 
                 <ItemsControl x:Name="ChecklistItems">
@@ -235,7 +473,7 @@
                                     Padding="12"
                                     Margin="0,0,0,10">
 
-                                <Grid ColumnDefinitions="Auto,*,Auto,Auto"
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto"
                                       ColumnSpacing="12">
 
                                     <!-- Checkbox -->
@@ -253,34 +491,61 @@
     <TextBlock Text="{Binding Title}"
                Classes="check-title"/>
 
-    <TextBlock Text="{Binding Priority}"
+    <TextBlock Text="{Binding Detail}"
                Classes="priority"/>
 
-<ScrollViewer MaxHeight="90"
-              VerticalScrollBarVisibility="Auto"
-              HorizontalScrollBarVisibility="Disabled"
-              IsVisible="{Binding HasNotes}">
+<StackPanel Spacing="6"
+            IsVisible="{Binding HasNotes}">
 
-    <TextBlock Text="{Binding Notes}"
-               Classes="check-notes"
-               TextWrapping="Wrap"/>
+    <controls:NoteText Source="{Binding Notes}"
+                       Classes="check-notes"
+                       MaxHeight="72"/>
 
-</ScrollViewer>
+    <Button Content="View notes"
+            Classes="notes-link"
+            Tag="{Binding}"
+            Click="ViewNotes_Click"/>
+
+</StackPanel>
 
 </StackPanel>
 
 
+                                    <StackPanel Grid.Column="2"
+                                                Orientation="Horizontal"
+                                                Spacing="4"
+                                                VerticalAlignment="Center">
+                                        <Button Classes="icon move"
+                                                Content="↑"
+                                                ToolTip.Tip="Move up"
+                                                Tag="{Binding}"
+                                                Click="MoveUp_Click"/>
+                                        <Button Classes="icon move"
+                                                Content="↓"
+                                                ToolTip.Tip="Move down"
+                                                Tag="{Binding}"
+                                                Click="MoveDown_Click"/>
+                                    </StackPanel>
+
                                     <!-- Edit -->
-                                    <Button Grid.Column="2"
+                                    <Button Grid.Column="3"
                                             Classes="icon"
-                                            Content="✏"
                                             ToolTip.Tip="Edit"
                                             Tag="{Binding}"
-                                            Click="EditCheck_Click"/>
+                                            Click="EditCheck_Click">
+                                        <Viewbox Width="15"
+                                                 Height="15">
+                                            <Path Stroke="{Binding $parent[Button].Foreground}"
+                                                  StrokeThickness="1.6"
+                                                  StrokeLineCap="Round"
+                                                  StrokeJoin="Round"
+                                                  Data="M12,20 H21 M16.5,3.5 A2.12,2.12 0 0 1 19.5,6.5 L7,19 L3,20 L4,16 Z M15,5 L19,9"/>
+                                        </Viewbox>
+                                    </Button>
 
 
                                     <!-- Delete -->
-                                    <Button Grid.Column="3"
+                                    <Button Grid.Column="4"
                                             Classes="icon delete"
                                             Content="🗑"
                                             ToolTip.Tip="Remove"
@@ -298,6 +563,15 @@
                 </ItemsControl>
 
             </ScrollViewer>
+
+            <TextBlock x:Name="EmptyFilterText"
+                       Classes="empty-filter"
+                       Text="No checks match."
+                       IsVisible="False"/>
+
+            </Grid>
+
+            </Grid>
 
         </Border>
 

@@ -1,7 +1,7 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 
-namespace DevGuard.Views;
+namespace SuperDev.Views;
 
 public enum ClosePromptResult
 {

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build a DevGuard.app bundle from a self-contained `dotnet publish` folder
+# Build a "Super Dev.app" bundle from a self-contained `dotnet publish` folder
 # and package it as a drag-to-Applications DMG.
 #
 # Native Avalonia libraries are copied next to the executable. This script does
@@ -7,8 +7,9 @@
 
 set -euo pipefail
 
-APP_NAME="DevGuard"
-BUNDLE_ID="com.devguard.desktop"
+APP_EXECUTABLE="Super Dev"
+APP_DISPLAY_NAME="Super Dev"
+BUNDLE_ID="com.superdev.desktop"
 
 usage() {
   cat <<'EOF'
@@ -82,7 +83,7 @@ mkdir -p "$output_dir"
 output_dir="$(cd "$output_dir" && pwd)"
 output="$output_dir/$(basename "$output")"
 
-executable="$publish_dir/$APP_NAME"
+executable="$publish_dir/$APP_EXECUTABLE"
 [[ -f "$executable" ]] || die "Publish did not produce $executable"
 [[ -s "$executable" ]] || die "Published executable is empty: $executable"
 
@@ -106,7 +107,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-app_bundle="$work_dir/$APP_NAME.app"
+app_bundle="$work_dir/$APP_DISPLAY_NAME.app"
 macos_dir="$app_bundle/Contents/MacOS"
 mkdir -p "$macos_dir"
 
@@ -117,8 +118,14 @@ while IFS= read -r -d '' file; do
   cp -p "$file" "$destination"
 done < <(find "$publish_dir" -type f ! -name '*.pdb' ! -name '*.xml' -print0)
 
-chmod +x "$macos_dir/$APP_NAME"
+chmod +x "$macos_dir/$APP_EXECUTABLE"
 find "$macos_dir" -name '*.dylib' -exec chmod +x {} +
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+icon_path="$repo_root/Assets/AppIcon.icns"
+[[ -s "$icon_path" ]] || die "App icon is missing: $icon_path"
+mkdir -p "$app_bundle/Contents/Resources"
+cp "$icon_path" "$app_bundle/Contents/Resources/AppIcon.icns"
 
 plist="$app_bundle/Contents/Info.plist"
 cat > "$plist" <<EOF
@@ -127,13 +134,15 @@ cat > "$plist" <<EOF
 <plist version="1.0">
 <dict>
   <key>CFBundleName</key>
-  <string>$APP_NAME</string>
+  <string>$APP_DISPLAY_NAME</string>
   <key>CFBundleDisplayName</key>
-  <string>$APP_NAME</string>
+  <string>$APP_DISPLAY_NAME</string>
   <key>CFBundleIdentifier</key>
   <string>$BUNDLE_ID</string>
   <key>CFBundleExecutable</key>
-  <string>$APP_NAME</string>
+  <string>$APP_EXECUTABLE</string>
+  <key>CFBundleIconFile</key>
+  <string>AppIcon</string>
   <key>CFBundlePackageType</key>
   <string>APPL</string>
   <key>CFBundleInfoDictionaryVersion</key>
@@ -166,16 +175,17 @@ printf 'APPL????' > "$app_bundle/Contents/PkgInfo"
 
 plutil -lint "$plist" >/dev/null
 executable_name="$(plutil -extract CFBundleExecutable raw "$plist")"
-[[ "$executable_name" == "$APP_NAME" ]] || die "Info.plist executable is '$executable_name'"
-[[ -x "$macos_dir/$APP_NAME" ]] || die "App bundle executable is missing or not executable"
-[[ -s "$macos_dir/$APP_NAME" ]] || die "App bundle executable is empty"
+[[ "$executable_name" == "$APP_EXECUTABLE" ]] || die "Info.plist executable is '$executable_name'"
+[[ -x "$macos_dir/$APP_EXECUTABLE" ]] || die "App bundle executable is missing or not executable"
+[[ -s "$macos_dir/$APP_EXECUTABLE" ]] || die "App bundle executable is empty"
 [[ -f "$plist" ]] || die "Info.plist was not written"
+[[ -s "$app_bundle/Contents/Resources/AppIcon.icns" ]] || die "App icon was not added to the bundle"
 
-actual_arch="$(lipo -archs "$macos_dir/$APP_NAME")"
+actual_arch="$(lipo -archs "$macos_dir/$APP_EXECUTABLE")"
 [[ "$actual_arch" == "$expected_arch" ]] || \
   die "$rid executable architecture is '$actual_arch', expected '$expected_arch'"
 
-file "$macos_dir/$APP_NAME" | grep -q "Mach-O" || \
+file "$macos_dir/$APP_EXECUTABLE" | grep -q "Mach-O" || \
   die "App executable is not a Mach-O binary"
 
 if ! find "$macos_dir" -name 'libAvaloniaNative.dylib' -print -quit | grep -q .; then
@@ -194,7 +204,7 @@ mkdir -p "$mount_point"
 hdiutil create \
   -size "${size_kb}k" \
   -fs HFS+ \
-  -volname "$APP_NAME" \
+  -volname "$APP_DISPLAY_NAME" \
   "$scratch_dmg"
 
 hdiutil attach "$scratch_dmg" \
@@ -202,12 +212,12 @@ hdiutil attach "$scratch_dmg" \
   -nobrowse \
   -noverify
 
-cp -R "$app_bundle" "$mount_point/$APP_NAME.app"
+cp -R "$app_bundle" "$mount_point/$APP_DISPLAY_NAME.app"
 ln -s /Applications "$mount_point/Applications"
 
-[[ -x "$mount_point/$APP_NAME.app/Contents/MacOS/$APP_NAME" ]] || \
+[[ -x "$mount_point/$APP_DISPLAY_NAME.app/Contents/MacOS/$APP_EXECUTABLE" ]] || \
   die "Mounted disk image is missing the app executable"
-[[ -f "$mount_point/$APP_NAME.app/Contents/Info.plist" ]] || \
+[[ -f "$mount_point/$APP_DISPLAY_NAME.app/Contents/Info.plist" ]] || \
   die "Mounted disk image is missing Info.plist"
 [[ -L "$mount_point/Applications" ]] || \
   die "Mounted disk image is missing the Applications shortcut"

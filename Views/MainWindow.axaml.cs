@@ -8,10 +8,10 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
-using DevGuard.Models;
-using DevGuard.Services;
+using SuperDev.Models;
+using SuperDev.Services;
 
-namespace DevGuard.Views;
+namespace SuperDev.Views;
 
 public partial class MainWindow : Window
 {
@@ -57,6 +57,17 @@ public partial class MainWindow : Window
         BlankButton.Classes.Remove("selected");
     }
 
+    private void PullRequest_TextChanged(object? sender, TextChangedEventArgs e)
+    {
+        OpenPullRequestButton.IsEnabled = ExternalLink.CanOpen(PullRequestTextBox.Text);
+    }
+
+    private async void OpenPullRequest_Click(object? sender, RoutedEventArgs e)
+    {
+        if (!ExternalLink.TryOpen(PullRequestTextBox.Text))
+            await ShowMessage("That PR link could not be opened.");
+    }
+
     private async void Create_Click(
         object? sender,
         RoutedEventArgs e)
@@ -82,6 +93,8 @@ public partial class MainWindow : Window
             FormatVersion = ChecklistDocument.CurrentFormatVersion,
             Id = Guid.NewGuid(),
             Title = workTitle,
+            BranchName = BranchNameTextBox.Text?.Trim() ?? string.Empty,
+            PullRequestUrl = PullRequestTextBox.Text?.Trim() ?? string.Empty,
             WorkType = workType,
             CreatedOn = now,
             UpdatedOn = now,
@@ -92,6 +105,8 @@ public partial class MainWindow : Window
         OpenDocumentTab(document, filePath: null, isDirty: true);
 
         WorkTitleTextBox.Text = string.Empty;
+        BranchNameTextBox.Text = string.Empty;
+        PullRequestTextBox.Text = string.Empty;
         _selectedWorkType = null;
         ClearTemplateSelection();
     }
@@ -104,6 +119,8 @@ public partial class MainWindow : Window
         var view = new ChecklistView(
             document.WorkType,
             document.Title,
+            document.BranchName ?? string.Empty,
+            document.PullRequestUrl ?? string.Empty,
             document.Items);
 
         // Title sizes the tab. It ellipsizes at the width left inside the tab max
@@ -358,9 +375,9 @@ public partial class MainWindow : Window
             AllowMultiple = false,
             FileTypeFilter =
             [
-                new FilePickerFileType("DevGuard checklist")
+                new FilePickerFileType("Super Dev checklist")
                 {
-                    Patterns = ["*.devguard.json", "*.json"],
+                    Patterns = ["*.superdev.json", "*.json"],
                     MimeTypes = ["application/json"]
                 }
             ]
@@ -456,13 +473,13 @@ public partial class MainWindow : Window
         {
             Title = "Save checklist",
             SuggestedFileName = SuggestedFileName(tab.Document.Title),
-            DefaultExtension = "devguard.json",
+            DefaultExtension = "superdev.json",
             ShowOverwritePrompt = true,
             FileTypeChoices =
             [
-                new FilePickerFileType("DevGuard checklist")
+                new FilePickerFileType("Super Dev checklist")
                 {
-                    Patterns = ["*.devguard.json"],
+                    Patterns = ["*.superdev.json"],
                     MimeTypes = ["application/json"]
                 }
             ]
@@ -516,7 +533,7 @@ public partial class MainWindow : Window
             {
                 var replace = await ConfirmAsync(
                     "Replace this file?",
-                    "That file isn't a DevGuard checklist. Replace it with this checklist?",
+                    "That file isn't a Super Dev checklist. Replace it with this checklist?",
                     "Replace",
                     "Cancel",
                     danger: true);
@@ -687,7 +704,10 @@ public partial class MainWindow : Window
 
     private static void CopyViewOntoDocument(ChecklistTab tab)
     {
+        tab.View.CommitDetails();
         tab.Document.Title = tab.View.WorkTitle;
+        tab.Document.BranchName = tab.View.BranchName;
+        tab.Document.PullRequestUrl = tab.View.PullRequestUrl;
         tab.Document.WorkType = tab.View.WorkType;
         tab.Document.Items = tab.View.Items.ToList();
     }
@@ -695,6 +715,10 @@ public partial class MainWindow : Window
     private void OnDocumentEdited(ChecklistTab tab)
     {
         tab.IsDirty = true;
+        tab.Document.Title = tab.View.WorkTitle;
+        tab.Document.BranchName = tab.View.BranchName;
+        tab.Document.PullRequestUrl = tab.View.PullRequestUrl;
+        tab.TitleText.Text = tab.Document.Title;
 
         // Opening never reaches this. Completion stays until a Critical or Required
         // check is incomplete, so the flag still means those checks passed.
@@ -777,12 +801,12 @@ public partial class MainWindow : Window
         if (cleaned.Length == 0)
             cleaned = "Checklist";
 
-        return cleaned + ".devguard.json";
+        return cleaned + ".superdev.json";
     }
 
     private static string EnsureChecklistExtension(string path)
     {
-        const string extension = ".devguard.json";
+        const string extension = ".superdev.json";
 
         while (path.EndsWith(extension + extension, StringComparison.OrdinalIgnoreCase))
             path = path[..^extension.Length];
@@ -824,7 +848,7 @@ public partial class MainWindow : Window
 
     private async Task ShowMessage(string message)
     {
-        var dialog = new StyledDialog("DevGuard", message);
+        var dialog = new StyledDialog("Super Dev", message);
         await dialog.ShowDialog(this);
     }
 

@@ -2,9 +2,9 @@ using System;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
-using DevGuard.ViewModels;
+using SuperDev.ViewModels;
 
-namespace DevGuard;
+namespace SuperDev;
 
 /// <summary>
 /// Given a view model, returns the corresponding view if possible.

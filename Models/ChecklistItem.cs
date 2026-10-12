@@ -1,7 +1,7 @@
 using System;
 using System.Text.Json.Serialization;
 
-namespace DevGuard.Models;
+namespace SuperDev.Models;
 
 public class ChecklistItem
 {
@@ -19,6 +19,12 @@ public class ChecklistItem
    [JsonIgnore]
    public bool HasNotes =>
        !string.IsNullOrWhiteSpace(Notes);
+
+   [JsonIgnore]
+   public string Detail =>
+       string.IsNullOrWhiteSpace(Category)
+           ? Priority.ToString()
+           : $"{Category} · {Priority}";
 
    public bool IsCompleted { get; set; }
 }

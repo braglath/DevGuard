@@ -1,6 +1,6 @@
 using System;
 
-namespace DevGuard.Models;
+namespace SuperDev.Models;
 
 public sealed class RecentChecklistEntry
 {

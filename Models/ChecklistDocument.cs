@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace DevGuard.Models;
+namespace SuperDev.Models;
 
 public sealed class ChecklistDocument
 {
@@ -12,6 +12,10 @@ public sealed class ChecklistDocument
     public Guid Id { get; set; }
 
     public string Title { get; set; } = string.Empty;
+
+    public string BranchName { get; set; } = string.Empty;
+
+    public string PullRequestUrl { get; set; } = string.Empty;
 
     public WorkType WorkType { get; set; }
 

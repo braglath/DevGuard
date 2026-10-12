@@ -1,6 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 
-namespace DevGuard.ViewModels;
+namespace SuperDev.ViewModels;
 
 public partial class MainViewModel : ViewModelBase
 {

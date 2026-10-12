@@ -1,10 +1,11 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        x:Class="DevGuard.Views.StyledDialog"
+        x:Class="SuperDev.Views.StyledDialog"
         Width="460"
         Height="240"
         MinWidth="400"
         MinHeight="200"
+        Icon="/Assets/app.ico"
         Background="#0B1120"
         WindowStartupLocation="CenterOwner">
 

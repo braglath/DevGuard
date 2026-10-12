@@ -1,10 +1,10 @@
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
-using DevGuard.ViewModels;
-using DevGuard.Views;
+using SuperDev.ViewModels;
+using SuperDev.Views;
 
-namespace DevGuard;
+namespace SuperDev;
 
 public partial class App : Application
 {
@@ -21,6 +21,7 @@ public partial class App : Application
             {
                 DataContext = new MainViewModel(),
             };
+            MacDockIcon.Apply();
         }
 
         base.OnFrameworkInitializationCompleted();

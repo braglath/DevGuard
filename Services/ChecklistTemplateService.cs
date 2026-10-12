@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using DevGuard.Models;
+using SuperDev.Models;
 
-namespace DevGuard.Services;
+namespace SuperDev.Services;
 
 public class ChecklistTemplateService
 {

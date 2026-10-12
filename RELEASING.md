@@ -1,12 +1,12 @@
-# Releasing DevGuard
+# Releasing Super Dev
 
-Pushing a version tag builds DevGuard and attaches three packages to one GitHub Release:
+Pushing a version tag builds Super Dev and attaches three packages to one GitHub Release:
 
-- `DevGuard-v1.1.0-win-x64.zip`
-- `DevGuard-v1.1.0-osx-arm64.dmg` (Apple Silicon)
-- `DevGuard-v1.1.0-osx-x64.dmg` (Intel)
+- `Super Dev-v1.1.0-win-x64.zip`
+- `Super Dev-v1.1.0-osx-arm64.dmg` (Apple Silicon)
+- `Super Dev-v1.1.0-osx-x64.dmg` (Intel)
 
-The tag you push is the version. `v1.2.0` produces `DevGuard-v1.2.0-...` assets and a release titled `DevGuard v1.2.0`. The workflow does not create or move tags.
+The tag you push is the version. `v1.2.0` produces `Super Dev-v1.2.0-...` assets and a release titled `Super Dev v1.2.0`. The workflow does not create or move tags.
 
 These macOS builds are not signed or notarized. macOS Gatekeeper can warn that the app is from an unidentified developer.
 
@@ -22,7 +22,7 @@ git push origin v1.1.0
 GitHub Actions runs `.github/workflows/release.yml` for tags matching `v*.*.*`.
 
 1. A Windows runner publishes a self-contained `win-x64` app and zips it.
-2. A macOS runner publishes `osx-arm64` and `osx-x64`, wraps each in `DevGuard.app`, and creates a DMG.
+2. A macOS runner publishes `osx-arm64` and `osx-x64`, wraps each in `Super Dev.app`, and creates a DMG.
 3. After all three packages exist, one job creates the GitHub Release and uploads them together.
 
 If any build fails, the release is not created.
@@ -33,11 +33,11 @@ Open the repository **Releases** page. The `v1.1.0` release lists the three asse
 
 ## Install
 
-**Windows.** Extract `DevGuard-v1.1.0-win-x64.zip` and run `DevGuard.exe`.
+**Windows.** Extract `Super Dev-v1.1.0-win-x64.zip` and run `Super Dev.exe`.
 
-**Mac.** Open the DMG for your Mac. Apple Silicon uses `osx-arm64`. Intel uses `osx-x64`. Drag **DevGuard** onto the **Applications** shortcut, then open DevGuard from Applications.
+**Mac.** Open the DMG for your Mac. Apple Silicon uses `osx-arm64`. Intel uses `osx-x64`. Drag **Super Dev** onto the **Applications** shortcut, then open Super Dev from Applications.
 
-If macOS says the app cannot be opened because it is from an unidentified developer, the build is unsigned. Open **System Settings → Privacy & Security** and allow DevGuard, or right-click the app, choose **Open**, and confirm. That warning is expected until the app is signed and notarized.
+If macOS says the app cannot be opened because it is from an unidentified developer, the build is unsigned. Open **System Settings → Privacy & Security** and allow Super Dev, or right-click the app, choose **Open**, and confirm. That warning is expected until the app is signed and notarized.
 
 ## When a tag already exists
 
@@ -56,7 +56,7 @@ Moving `v1.1.0` onto another commit rewrites a published tag. Do that only when 
 
 ## Signing and notarization later
 
-The packaging script stops before any `codesign` or `notarytool` command. Add those steps after `DevGuard.app` is built and before the DMG is created. Store the credentials as GitHub Actions secrets. Do not commit certificates or passwords.
+The packaging script stops before any `codesign` or `notarytool` command. Add those steps after `Super Dev.app` is built and before the DMG is created. Store the credentials as GitHub Actions secrets. Do not commit certificates or passwords.
 
 Typical secrets:
 

@@ -1,13 +1,13 @@
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using DevGuard.Models;
+using SuperDev.Models;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System;
 
-namespace DevGuard.Views;
+namespace SuperDev.Views;
 
 public partial class ChecklistWindow : Window
 {

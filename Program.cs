@@ -1,7 +1,7 @@
 ﻿using Avalonia;
 using System;
 
-namespace DevGuard;
+namespace SuperDev;
 
 sealed class Program
 {

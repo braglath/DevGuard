@@ -1,0 +1,91 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:controls="using:SuperDev.Controls"
+        x:Class="SuperDev.Views.NotesWindow"
+        Width="680"
+        Height="560"
+        MinWidth="480"
+        MinHeight="360"
+        Title="Notes"
+        Icon="/Assets/app.ico"
+        Background="#0B1120"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Styles>
+
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily" Value="Inter, Segoe UI, sans-serif"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+        </Style>
+
+        <Style Selector="TextBlock.dialog-title">
+            <Setter Property="FontSize" Value="20"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style Selector="TextBlock.dialog-detail">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+        </Style>
+
+        <Style Selector="Button.dialog-button">
+            <Setter Property="Height" Value="42"/>
+            <Setter Property="MinWidth" Value="100"/>
+            <Setter Property="Padding" Value="20,8"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style Selector="Button.dialog-button:pointerover">
+            <Setter Property="Background" Value="#3B82F6"/>
+        </Style>
+
+    </Window.Styles>
+
+    <Grid Margin="28"
+          RowDefinitions="Auto,Auto,*,Auto"
+          RowSpacing="14">
+
+        <TextBlock x:Name="TitleText"
+                   Classes="dialog-title"/>
+
+        <TextBlock x:Name="DetailText"
+                   Grid.Row="1"
+                   Classes="dialog-detail"/>
+
+        <Border Grid.Row="2"
+                Background="#111827"
+                BorderBrush="#1E293B"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="18">
+
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Auto">
+
+                <controls:NoteText x:Name="NotesText"
+                                   FontSize="15"
+                                   LineHeight="24"
+                                   Foreground="#CBD5E1"
+                                   TextWrapping="Wrap"/>
+
+            </ScrollViewer>
+
+        </Border>
+
+        <Button Grid.Row="3"
+                Content="Close"
+                Classes="dialog-button"
+                HorizontalAlignment="Right"
+                Click="Close_Click"/>
+
+    </Grid>
+
+</Window>

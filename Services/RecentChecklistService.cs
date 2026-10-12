@@ -4,9 +4,9 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using DevGuard.Models;
+using SuperDev.Models;
 
-namespace DevGuard.Services;
+namespace SuperDev.Services;
 
 public sealed class RecentChecklistService
 {
@@ -28,7 +28,7 @@ public sealed class RecentChecklistService
         {
             var folder = Path.Combine(
                 Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-                "DevGuard");
+                "Super Dev");
             storePath = Path.Combine(folder, "recent-checklists.json");
         }
 

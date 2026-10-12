@@ -1,12 +1,13 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:models="using:DevGuard.Models"
-        x:Class="DevGuard.Views.ChecklistWindow"
+        xmlns:models="using:SuperDev.Models"
+        x:Class="SuperDev.Views.ChecklistWindow"
         Width="1100"
         Height="800"
         MinWidth="850"
         MinHeight="650"
-        Title="DevGuard"
+        Title="Super Dev"
+        Icon="/Assets/app.ico"
         Background="#0B1120">
 
     <Window.Styles>
