@@ -2,9 +2,9 @@
 # Build a "Super Dev.app" bundle from a self-contained `dotnet publish` folder
 # and package it as a drag-to-Applications DMG.
 #
-# Native Avalonia libraries are copied next to the executable. Every Mach-O file
-# is ad-hoc signed so Apple Silicon can launch the bundle. A downloaded copy
-# still needs Apple notarization before Gatekeeper will open it without a warning.
+# Native Avalonia libraries are copied next to the executable. Every file in the
+# bundle is ad-hoc signed, managed DLLs included, so Apple Silicon can launch it.
+# A downloaded copy still needs Apple notarization before Gatekeeper will open it.
 
 set -euo pipefail
 
@@ -229,15 +229,31 @@ if ! find "$macos_dir" -name 'libAvaloniaNative.dylib' -print -quit | grep -q .;
   die "App bundle is missing libAvaloniaNative.dylib"
 fi
 
-# Apple Silicon rejects an unsigned app bundle and reports it as damaged.
-# Sign nested Mach-O files first, then the bundle. Ad-hoc identity "-" is valid
-# for the kernel; Gatekeeper still blocks a downloaded copy until it is notarized.
-xattr -cr "$app_bundle"
+[[ -s "$macos_dir/libSuperDevNotify.dylib" ]] || \
+  die "App bundle is missing libSuperDevNotify.dylib"
+
 while IFS= read -r -d '' candidate; do
-  if file -b "$candidate" | grep -q "Mach-O"; then
-    codesign --force --sign - "$candidate"
+  if ! archs="$(lipo -archs "$candidate" 2>/dev/null)"; then
+    continue
+  fi
+  if [[ " $archs " != *" $expected_arch "* ]]; then
+    die "$candidate is '$archs', expected '$expected_arch'"
   fi
 done < <(find "$macos_dir" -type f -print0)
+
+# Apple Silicon rejects an unsigned app bundle and reports it as damaged.
+# codesign treats the managed DLLs next to the executable as nested code, so
+# those files must be signed before the executable. The bundle is signed last.
+# Ad-hoc identity "-" is valid for the kernel; Gatekeeper still blocks a
+# downloaded copy until it is notarized.
+xattr -cr "$app_bundle"
+while IFS= read -r -d '' candidate; do
+  if [[ "$candidate" == "$macos_dir/$APP_EXECUTABLE" ]]; then
+    continue
+  fi
+  codesign --force --sign - "$candidate"
+done < <(find "$app_bundle" -type f -print0)
+codesign --force --sign - "$macos_dir/$APP_EXECUTABLE"
 codesign --force --sign - "$app_bundle"
 codesign --verify --strict --verbose=2 "$app_bundle"
 
@@ -263,6 +279,7 @@ ln -s /Applications "$mount_point/Applications"
 
 [[ -x "$mount_point/$APP_DISPLAY_NAME.app/Contents/MacOS/$APP_EXECUTABLE" ]] || \
   die "Mounted disk image is missing the app executable"
+codesign --verify --strict --verbose=2 "$mount_point/$APP_DISPLAY_NAME.app"
 [[ -f "$mount_point/$APP_DISPLAY_NAME.app/Contents/Info.plist" ]] || \
   die "Mounted disk image is missing Info.plist"
 [[ -L "$mount_point/Applications" ]] || \

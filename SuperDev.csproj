@@ -34,10 +34,26 @@
 
   <Target Name="CompileMacNotifier"
           BeforeTargets="CoreCompile"
-          Condition="$([MSBuild]::IsOSPlatform('OSX'))"
+          Condition="$([MSBuild]::IsOSPlatform('OSX')) and ('$(RuntimeIdentifier)' == '' or $(RuntimeIdentifier.StartsWith('osx-')))"
           Inputs="Platform/notify.m"
           Outputs="$(OutputPath)libSuperDevNotify.dylib">
+    <PropertyGroup>
+      <MacNotifierArch Condition="'$(RuntimeIdentifier)' == 'osx-arm64'">arm64</MacNotifierArch>
+      <MacNotifierArch Condition="'$(RuntimeIdentifier)' == 'osx-x64'">x86_64</MacNotifierArch>
+      <MacNotifierArch Condition="'$(MacNotifierArch)' == '' and $([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture) == 'Arm64'">arm64</MacNotifierArch>
+      <MacNotifierArch Condition="'$(MacNotifierArch)' == ''">x86_64</MacNotifierArch>
+    </PropertyGroup>
     <MakeDir Directories="$(OutputPath)" />
-    <Exec Command="clang -dynamiclib -fobjc-arc -O2 -Wno-deprecated-declarations -o &quot;$(OutputPath)libSuperDevNotify.dylib&quot; &quot;Platform/notify.m&quot; -framework Foundation -framework AppKit -framework UserNotifications" />
+    <Exec Command="clang -arch $(MacNotifierArch) -dynamiclib -fobjc-arc -O2 -Wno-deprecated-declarations -o &quot;$(OutputPath)libSuperDevNotify.dylib&quot; &quot;Platform/notify.m&quot; -framework Foundation -framework AppKit -framework UserNotifications" />
+  </Target>
+
+  <Target Name="AddMacNotifierToPublish"
+          AfterTargets="ComputeFilesToPublish"
+          Condition="$([MSBuild]::IsOSPlatform('OSX')) and $(RuntimeIdentifier.StartsWith('osx-'))">
+    <ItemGroup>
+      <ResolvedFileToPublish Include="$(OutputPath)libSuperDevNotify.dylib">
+        <RelativePath>libSuperDevNotify.dylib</RelativePath>
+      </ResolvedFileToPublish>
+    </ItemGroup>
   </Target>
 </Project>
