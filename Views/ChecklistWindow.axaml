@@ -97,6 +97,7 @@
             <Setter Property="FontSize" Value="15"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
         </Style>
 
         <!-- Priority -->

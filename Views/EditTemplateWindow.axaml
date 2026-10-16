@@ -1,0 +1,270 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        x:Class="SuperDev.Views.EditTemplateWindow"
+        Width="680"
+        Height="720"
+        MinWidth="560"
+        MinHeight="520"
+        CanResize="True"
+        Title="Edit template"
+        Icon="/Assets/app.ico"
+        Background="#0B1120"
+        WindowStartupLocation="CenterOwner">
+
+    <Window.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="FontFamily" Value="Inter, Segoe UI, sans-serif"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+        </Style>
+
+        <Style Selector="TextBox.field">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Padding" Value="10,0"/>
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="TextBox.check-field">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="ComboBox.field">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        </Style>
+
+        <Style Selector="Button.icon-choice">
+            <Setter Property="Width" Value="40"/>
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="Margin" Value="3"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontSize" Value="18"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="Button.icon-choice /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.icon-choice:pointerover">
+            <Setter Property="BorderBrush" Value="#3B82F6"/>
+            <Setter Property="Background" Value="#1E293B"/>
+        </Style>
+
+        <Style Selector="Button.icon-choice.on">
+            <Setter Property="BorderBrush" Value="#2563EB"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="Background" Value="#172F55"/>
+        </Style>
+
+        <Style Selector="Button.form-button">
+            <Setter Property="Height" Value="40"/>
+            <Setter Property="MinWidth" Value="96"/>
+            <Setter Property="Padding" Value="16,0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="Button.form-button /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.cancel">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style Selector="Button.cancel:pointerover">
+            <Setter Property="Background" Value="#263449"/>
+        </Style>
+
+        <Style Selector="Button.secondary">
+            <Setter Property="Background" Value="#172033"/>
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+        </Style>
+
+        <Style Selector="Button.secondary:pointerover">
+            <Setter Property="BorderBrush" Value="#3B82F6"/>
+        </Style>
+
+        <Style Selector="Button.primary">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+
+        <Style Selector="Button.primary:pointerover">
+            <Setter Property="Background" Value="#1D4ED8"/>
+        </Style>
+
+        <Style Selector="Button.delete">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#F87171"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="MinWidth" Value="72"/>
+            <Setter Property="Padding" Value="8,0"/>
+        </Style>
+
+        <Style Selector="Button.delete:pointerover">
+            <Setter Property="Background" Value="#3F1D1D"/>
+        </Style>
+
+        <Style Selector="Button.add-check">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="12,0"/>
+            <Setter Property="Background" Value="#172033"/>
+            <Setter Property="Foreground" Value="#93C5FD"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="Button.remove-check">
+            <Setter Property="Width" Value="32"/>
+            <Setter Property="Height" Value="32"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="Button.remove-check:pointerover">
+            <Setter Property="Background" Value="#3F1D1D"/>
+            <Setter Property="Foreground" Value="#F87171"/>
+        </Style>
+    </Window.Styles>
+
+    <Grid Margin="24" RowDefinitions="Auto,Auto,Auto,*,Auto">
+        <StackPanel Grid.Row="0" Spacing="8">
+            <TextBlock Text="Title"
+                       FontSize="13"
+                       Foreground="#94A3B8"/>
+            <TextBox x:Name="TitleBox"
+                     Classes="field"
+                     PlaceholderText="Template name"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="1" Margin="0,18,0,0" Spacing="8">
+            <TextBlock Text="Icon"
+                       FontSize="13"
+                       Foreground="#94A3B8"/>
+            <Border Background="#0F172A"
+                    BorderBrush="#334155"
+                    BorderThickness="1"
+                    CornerRadius="12"
+                    Padding="6">
+                <ScrollViewer MaxHeight="140"
+                              HorizontalScrollBarVisibility="Disabled"
+                              VerticalScrollBarVisibility="Auto">
+                    <WrapPanel x:Name="IconList"/>
+                </ScrollViewer>
+            </Border>
+        </StackPanel>
+
+        <Grid Grid.Row="2" Margin="0,18,0,8" ColumnDefinitions="*,Auto">
+            <TextBlock Text="Checks"
+                       FontSize="13"
+                       Foreground="#94A3B8"
+                       VerticalAlignment="Center"/>
+            <Button Grid.Column="1"
+                    Classes="add-check"
+                    Content="Add check"
+                    Click="AddCheck_Click"/>
+        </Grid>
+
+        <Border Grid.Row="3"
+                Background="#0F172A"
+                BorderBrush="#334155"
+                BorderThickness="1"
+                CornerRadius="12"
+                Padding="10">
+            <Border.Resources>
+                <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="#0F172A"/>
+                <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="#334155"/>
+                <SolidColorBrush x:Key="ComboBoxItemForeground" Color="#E2E8F0"/>
+                <SolidColorBrush x:Key="ComboBoxItemBackground" Color="Transparent"/>
+                <SolidColorBrush x:Key="ComboBoxItemBackgroundPointerOver" Color="#1E293B"/>
+                <SolidColorBrush x:Key="ComboBoxItemForegroundPointerOver" Color="#F8FAFC"/>
+                <SolidColorBrush x:Key="ComboBoxItemBackgroundPressed" Color="#172033"/>
+                <SolidColorBrush x:Key="ComboBoxItemForegroundPressed" Color="#F8FAFC"/>
+                <SolidColorBrush x:Key="ComboBoxItemBackgroundSelected" Color="#1E3A8A"/>
+                <SolidColorBrush x:Key="ComboBoxItemForegroundSelected" Color="#FFFFFF"/>
+                <SolidColorBrush x:Key="ComboBoxItemBackgroundSelectedPointerOver" Color="#1D4ED8"/>
+                <SolidColorBrush x:Key="ComboBoxItemForegroundSelectedPointerOver" Color="#FFFFFF"/>
+            </Border.Resources>
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled"
+                          VerticalScrollBarVisibility="Auto">
+                <StackPanel x:Name="ChecksList" Spacing="8"/>
+            </ScrollViewer>
+        </Border>
+
+        <Grid Grid.Row="4" Margin="0,16,0,0" ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+            <Button x:Name="DeleteButton"
+                    Grid.Column="0"
+                    Classes="form-button delete"
+                    Content="Delete"
+                    Click="Delete_Click"/>
+            <Button Grid.Column="2"
+                    Classes="form-button cancel"
+                    Content="Cancel"
+                    Margin="0,0,8,0"
+                    Click="Cancel_Click"/>
+            <Button x:Name="SaveAsNewButton"
+                    Grid.Column="3"
+                    Classes="form-button secondary"
+                    Content="Save as new"
+                    Margin="0,0,8,0"
+                    Click="SaveAsNew_Click"/>
+            <Button x:Name="SaveButton"
+                    Grid.Column="4"
+                    Classes="form-button primary"
+                    Content="Save"
+                    IsDefault="True"
+                    Click="Save_Click"/>
+        </Grid>
+    </Grid>
+</Window>

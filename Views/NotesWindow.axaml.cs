@@ -22,7 +22,7 @@ public partial class NotesWindow : Window
 
     protected override void OnKeyDown(KeyEventArgs e)
     {
-        if (e.Key == Key.Escape)
+        if (e.Key is Key.Escape or Key.Enter or Key.Return)
         {
             Close();
             e.Handled = true;

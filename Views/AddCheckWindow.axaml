@@ -1,5 +1,7 @@
 <Window xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:models="using:SuperDev.Models"
+        xmlns:controls="using:SuperDev.Controls"
         x:Class="SuperDev.Views.AddCheckWindow"
         Width="500"
         Height="700"
@@ -19,6 +21,24 @@
                     Value="Inter, Segoe UI, sans-serif"/>
             <Setter Property="Foreground"
                     Value="#F8FAFC"/>
+        </Style>
+
+        <Style Selector="Calendar TextBlock">
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton:inactive TextBlock">
+            <Setter Property="Foreground" Value="#475569"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton:today:not(:selected) TextBlock">
+            <Setter Property="Foreground" Value="#93C5FD"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton:selected TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
 
         <!-- Field labels -->
@@ -81,6 +101,10 @@
             <Setter Property="Foreground" Value="#93C5FD"/>
         </Style>
 
+        <Style Selector="Button.expand-notes.late">
+            <Setter Property="Foreground" Value="#F87171"/>
+        </Style>
+
         <Style Selector="Button.deadline-clear">
             <Setter Property="Width" Value="18"/>
             <Setter Property="Height" Value="18"/>
@@ -101,6 +125,148 @@
         <Style Selector="Button.deadline-clear:pointerover">
             <Setter Property="Background" Value="#1E2A3F"/>
             <Setter Property="Foreground" Value="#F8FAFC"/>
+        </Style>
+
+        <Style Selector="TextBox.reminder-time">
+            <Setter Property="Width" Value="64"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="MaxLength" Value="2"/>
+            <Setter Property="(controls:TextBoxClearButton.Show)" Value="False"/>
+        </Style>
+
+        <Style Selector="Button.reminder-choice">
+            <Setter Property="Width" Value="52"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.reminder-choice.on">
+            <Setter Property="Background" Value="#1D4ED8"/>
+            <Setter Property="BorderBrush" Value="#1D4ED8"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Button.reminder-mode">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="8,0"/>
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.reminder-mode.on">
+            <Setter Property="Background" Value="#1D4ED8"/>
+            <Setter Property="BorderBrush" Value="#1D4ED8"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Button.reminder-mode /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.reminder-mode.on /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#1D4ED8"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Button.reminder-cancel">
+            <Setter Property="MinWidth" Value="88"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.reminder-cancel /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+        </Style>
+
+        <Style Selector="Button.reminder-set">
+            <Setter Property="MinWidth" Value="88"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.reminder-set /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.reminder-cancel TextBlock">
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+        </Style>
+
+        <Style Selector="Button.reminder-set TextBlock">
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Button.reminder-mode TextBlock">
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+        </Style>
+
+        <Style Selector="Button.reminder-mode.on TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Button.reminder-choice TextBlock">
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+        </Style>
+
+        <Style Selector="Button.reminder-choice.on TextBlock">
+            <Setter Property="Foreground" Value="White"/>
         </Style>
 
         <!-- Combo boxes -->
@@ -161,11 +327,11 @@
       RowSpacing="20">
 
     <Grid Grid.Row="0"
-          RowDefinitions="Auto,Auto,Auto,Auto,*"
+          RowDefinitions="Auto,Auto,Auto,*,Auto"
           RowSpacing="18">
 
             <!-- Check -->
-            <StackPanel Grid.Row="0"
+            <StackPanel Grid.Row="1"
                         Spacing="6">
                 <TextBlock Text="Check"
                            Classes="field-label"/>
@@ -176,58 +342,109 @@
             </StackPanel>
 
 
-            <!-- Category -->
-            <StackPanel Grid.Row="1"
+            <StackPanel Grid.Row="0"
                         Spacing="6">
-                <TextBlock Text="Category"
+                <TextBlock Text="Deadline"
                            Classes="field-label"/>
-
-                <ComboBox x:Name="CategoryComboBox"
-                          Classes="field">
-
-                    <ComboBoxItem Content="Understand"/>
-                    <ComboBoxItem Content="Development"/>
-                    <ComboBoxItem Content="Testing"/>
-                    <ComboBoxItem Content="Communication"/>
-                    <ComboBoxItem Content="PR"/>
-                    <ComboBoxItem Content="Merge"/>
-                    <ComboBoxItem Content="Deployment"/>
-                    <ComboBoxItem Content="Closure"/>
-
-                </ComboBox>
-            </StackPanel>
-
-
-            <!-- Priority -->
-            <StackPanel Grid.Row="2"
-                        Spacing="6">
-                <TextBlock Text="Priority"
-                           Classes="field-label"/>
-
-                <ComboBox x:Name="PriorityComboBox"
-                          Classes="field">
-
-                    <ComboBoxItem Content="Critical"/>
-                    <ComboBoxItem Content="Required"/>
-                    <ComboBoxItem Content="Conditional"/>
-                    <ComboBoxItem Content="Review"/>
-
-                </ComboBox>
-            </StackPanel>
-
-
-            <StackPanel Grid.Row="3"
-                        Orientation="Horizontal"
+            <StackPanel Orientation="Horizontal"
                         Spacing="4">
                 <Button x:Name="DeadlineButton"
                         Content="Pick deadline"
                         Classes="expand-notes">
                     <Button.Flyout>
                         <Flyout Placement="BottomEdgeAlignedLeft"
+                                FlyoutPresenterClasses="app-popup"
                                 Opened="DeadlineFlyout_Opened">
-                            <Calendar x:Name="DeadlineCalendar"
-                                      SelectionMode="SingleDate"
-                                      SelectedDatesChanged="DeadlineCalendar_Changed"/>
+                            <StackPanel Spacing="10"
+                                        Width="294"
+                                        KeyDown="DeadlineEditor_KeyDown">
+                                <Calendar x:Name="DeadlineCalendar"
+                                          SelectionMode="SingleDate"/>
+                                <TextBlock Text="Time"
+                                           Classes="field-label"/>
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="8">
+                                    <TextBox x:Name="DeadlineHourBox"
+                                             Classes="reminder-time"
+                                             PlaceholderText="09"/>
+                                    <TextBlock Text=":"
+                                               FontSize="16"
+                                               VerticalAlignment="Center"
+                                               Foreground="#94A3B8"/>
+                                    <TextBox x:Name="DeadlineMinuteBox"
+                                             Classes="reminder-time"
+                                             PlaceholderText="00"/>
+                                    <Button x:Name="DeadlineAmButton"
+                                            Classes="reminder-choice"
+                                            Content="AM"
+                                            Click="DeadlineMeridiem_Click"/>
+                                    <Button x:Name="DeadlinePmButton"
+                                            Classes="reminder-choice"
+                                            Content="PM"
+                                            Click="DeadlineMeridiem_Click"/>
+                                </StackPanel>
+                                <TextBlock Text="Notify"
+                                           Classes="field-label"/>
+                                <Grid ColumnDefinitions="*,*,*"
+                                      ColumnSpacing="8">
+                                    <Button x:Name="DeadlineNotifyNoneButton"
+                                            Classes="reminder-mode"
+                                            Content="None"
+                                            Click="DeadlineNotify_Click"/>
+                                    <Button x:Name="DeadlineNotifyOnButton"
+                                            Grid.Column="1"
+                                            Classes="reminder-mode"
+                                            Content="On time"
+                                            Click="DeadlineNotify_Click"/>
+                                    <Button x:Name="DeadlineNotifyBeforeButton"
+                                            Grid.Column="2"
+                                            Classes="reminder-mode"
+                                            Content="Before"
+                                            Click="DeadlineNotify_Click"/>
+                                </Grid>
+                                <StackPanel x:Name="DeadlineLeadPanel"
+                                            Orientation="Horizontal"
+                                            Spacing="8"
+                                            IsVisible="False">
+                                    <TextBox x:Name="DeadlineLeadBox"
+                                             Classes="reminder-time"
+                                             Width="72"
+                                             MaxLength="3"
+                                             Text="30"/>
+                                    <Button x:Name="DeadlineLeadMinutesButton"
+                                            Classes="reminder-mode"
+                                            Content="minutes"
+                                            Click="DeadlineLeadUnit_Click"/>
+                                    <Button x:Name="DeadlineLeadHoursButton"
+                                            Classes="reminder-mode"
+                                            Content="hours"
+                                            Click="DeadlineLeadUnit_Click"/>
+                                </StackPanel>
+                                <Button x:Name="DeadlineSilentButton"
+                                        Classes="reminder-mode"
+                                        Content="Silent"
+                                        HorizontalAlignment="Left"
+                                        MinWidth="120"
+                                        Click="DeadlineSilent_Click"/>
+                                <TextBlock Text="No sound for this deadline"
+                                           FontSize="11"
+                                           Foreground="#64748B"/>
+                                <TextBlock x:Name="DeadlineError"
+                                           TextWrapping="Wrap"
+                                           FontSize="12"
+                                           Foreground="#F87171"
+                                           IsVisible="False"/>
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Right"
+                                            Spacing="8">
+                                    <Button Content="Cancel"
+                                            Classes="reminder-cancel"
+                                            Click="DeadlineCancel_Click"/>
+                                    <Button Content="Set"
+                                            Classes="reminder-set"
+                                            Click="DeadlineSet_Click"/>
+                                </StackPanel>
+                            </StackPanel>
                         </Flyout>
                     </Button.Flyout>
                 </Button>
@@ -238,10 +455,102 @@
                         IsVisible="False"
                         Click="ClearDeadline_Click"/>
             </StackPanel>
+            </StackPanel>
 
+            <Grid Grid.Row="2"
+                  ColumnDefinitions="*,*"
+                  ColumnSpacing="12">
+                <StackPanel Spacing="6">
+                    <TextBlock Text="Category"
+                               Classes="field-label"/>
+                    <ComboBox x:Name="CategoryComboBox"
+                              Classes="field">
+                        <ComboBoxItem Content="Understand"/>
+                        <ComboBoxItem Content="Development"/>
+                        <ComboBoxItem Content="Testing"/>
+                        <ComboBoxItem Content="Communication"/>
+                        <ComboBoxItem Content="PR"/>
+                        <ComboBoxItem Content="Merge"/>
+                        <ComboBoxItem Content="Deployment"/>
+                        <ComboBoxItem Content="Closure"/>
+                    </ComboBox>
+                </StackPanel>
+                <StackPanel Grid.Column="1"
+                            Spacing="6">
+                    <TextBlock Text="Priority"
+                               Classes="field-label"/>
+                    <ComboBox x:Name="PriorityComboBox"
+                              Classes="field"
+                              SelectionChanged="PriorityComboBox_SelectionChanged">
+                        <ComboBoxItem Content="Critical" Foreground="#F87171"/>
+                        <ComboBoxItem Content="Required" Foreground="#FBBF24"/>
+                        <ComboBoxItem Content="Conditional" Foreground="#38BDF8"/>
+                        <ComboBoxItem Content="Review" Foreground="#C4B5FD"/>
+                    </ComboBox>
+                </StackPanel>
+            </Grid>
+
+            <StackPanel Grid.Row="4"
+                        Spacing="8">
+                <TextBlock Text="Linked checklists"
+                           Classes="field-label"/>
+                <Button Content="Link checklist"
+                        Classes="expand-notes"
+                        HorizontalAlignment="Left"
+                        Click="LinkChecklist_Click"/>
+                <ItemsControl x:Name="LinkList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:ChecklistSubtask">
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8"
+                                  Margin="0,0,0,6">
+                                <TextBlock Text="{Binding Title}"
+                                           VerticalAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           FontSize="14"/>
+                                <Button Grid.Column="1"
+                                        Classes="deadline-clear"
+                                        Content="×"
+                                        Click="RemoveLink_Click"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <TextBlock Text="Subtasks"
+                           Classes="field-label"/>
+                <Grid ColumnDefinitions="*,Auto"
+                      ColumnSpacing="8">
+                    <TextBox x:Name="SubtaskTextBox"
+                             Classes="field"
+                             PlaceholderText="Subtask"
+                             KeyDown="SubtaskTextBox_KeyDown"/>
+                    <Button Grid.Column="1"
+                            Content="Add"
+                            Classes="expand-notes"
+                            Click="AddSubtask_Click"/>
+                </Grid>
+                <ItemsControl x:Name="SubtaskList">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="models:ChecklistSubtask">
+                            <Grid ColumnDefinitions="*,Auto"
+                                  ColumnSpacing="8"
+                                  Margin="0,0,0,6">
+                                <TextBlock Text="{Binding Title}"
+                                           VerticalAlignment="Center"
+                                           TextWrapping="Wrap"
+                                           FontSize="14"/>
+                                <Button Grid.Column="1"
+                                        Classes="deadline-clear"
+                                        Content="×"
+                                        Click="RemoveSubtask_Click"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
 
             <!-- Notes -->
-            <Grid Grid.Row="4"
+            <Grid Grid.Row="3"
                   RowDefinitions="Auto,*"
                   RowSpacing="6">
 

@@ -65,6 +65,11 @@
             <Setter Property="BorderBrush" Value="#3B82F6"/>
         </Style>
 
+        <Style Selector="TextBox.reminder-count">
+            <Setter Property="(controls:TextBoxClearButton.Show)" Value="False"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+
         <!-- Progress -->
         <Style Selector="TextBlock.progress-text">
             <Setter Property="FontSize" Value="13"/>
@@ -125,11 +130,29 @@
             <Setter Property="BorderBrush" Value="#334155"/>
         </Style>
 
+        <Style Selector="Border.check-item.selected">
+            <Setter Property="Background" Value="#172F55"/>
+            <Setter Property="BorderBrush" Value="#3B82F6"/>
+        </Style>
+
+        <Style Selector="Border.check-item.selected:pointerover">
+            <Setter Property="Background" Value="#1E3A5F"/>
+            <Setter Property="BorderBrush" Value="#60A5FA"/>
+        </Style>
+
         <!-- Checklist title -->
         <Style Selector="TextBlock.check-title">
             <Setter Property="FontSize" Value="15"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+
+        <Style Selector="TextBlock.subtask-title">
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
 
         <!-- Priority -->
@@ -137,6 +160,45 @@
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontWeight" Value="SemiBold"/>
             <Setter Property="Foreground" Value="#94A3B8"/>
+        </Style>
+
+        <Style Selector="Border.priority-chip">
+            <Setter Property="Padding" Value="6,1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="TextBlock.priority-label">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <Style Selector="Border.priority-chip.critical">
+            <Setter Property="Background" Value="#3F1D24"/>
+        </Style>
+        <Style Selector="Border.priority-chip.critical TextBlock">
+            <Setter Property="Foreground" Value="#F87171"/>
+        </Style>
+
+        <Style Selector="Border.priority-chip.required">
+            <Setter Property="Background" Value="#3A2F12"/>
+        </Style>
+        <Style Selector="Border.priority-chip.required TextBlock">
+            <Setter Property="Foreground" Value="#FBBF24"/>
+        </Style>
+
+        <Style Selector="Border.priority-chip.conditional">
+            <Setter Property="Background" Value="#0C3044"/>
+        </Style>
+        <Style Selector="Border.priority-chip.conditional TextBlock">
+            <Setter Property="Foreground" Value="#38BDF8"/>
+        </Style>
+
+        <Style Selector="Border.priority-chip.review">
+            <Setter Property="Background" Value="#2E2458"/>
+        </Style>
+        <Style Selector="Border.priority-chip.review TextBlock">
+            <Setter Property="Foreground" Value="#C4B5FD"/>
         </Style>
 
         <!-- Icon buttons -->
@@ -233,6 +295,41 @@
             <Setter Property="Foreground" Value="#93C5FD"/>
         </Style>
 
+        <Style Selector="Button.notes-link.late">
+            <Setter Property="Foreground" Value="#F87171"/>
+        </Style>
+
+        <Style Selector="Button.notes-link.late:pointerover">
+            <Setter Property="Foreground" Value="#FCA5A5"/>
+        </Style>
+
+        <Style Selector="TextBlock.item-deadline.late">
+            <Setter Property="Foreground" Value="#F87171"/>
+        </Style>
+
+        <Style Selector="Button.subtask-link">
+            <Setter Property="Background" Value="#172033"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="8,3"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="HorizontalContentAlignment" Value="Left"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+
+        <Style Selector="Button.subtask-link:pointerover">
+            <Setter Property="Background" Value="#1E2A3F"/>
+            <Setter Property="BorderBrush" Value="#64748B"/>
+        </Style>
+
+        <Style Selector="Button.subtask-link.done">
+            <Setter Property="Foreground" Value="#4ADE80"/>
+            <Setter Property="BorderBrush" Value="#166534"/>
+        </Style>
+
         <Style Selector="Button.deadline-clear">
             <Setter Property="Width" Value="18"/>
             <Setter Property="Height" Value="18"/>
@@ -253,6 +350,188 @@
         <Style Selector="Button.deadline-clear:pointerover">
             <Setter Property="Background" Value="#1E2A3F"/>
             <Setter Property="Foreground" Value="#F8FAFC"/>
+        </Style>
+
+        <Style Selector="TextBox.reminder-time">
+            <Setter Property="Width" Value="64"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="PlaceholderForeground" Value="#64748B"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="MaxLength" Value="2"/>
+            <Setter Property="(controls:TextBoxClearButton.Show)" Value="False"/>
+        </Style>
+
+        <Style Selector="TextBox.reminder-time:focus">
+            <Setter Property="BorderBrush" Value="#3B82F6"/>
+        </Style>
+
+        <Style Selector="Button.reminder-choice">
+            <Setter Property="Width" Value="52"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.reminder-choice:pointerover">
+            <Setter Property="BorderBrush" Value="#64748B"/>
+        </Style>
+
+        <Style Selector="Button.reminder-choice.on">
+            <Setter Property="Background" Value="#1D4ED8"/>
+            <Setter Property="BorderBrush" Value="#1D4ED8"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Button.reminder-mode">
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="#111827"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.reminder-mode:pointerover">
+            <Setter Property="BorderBrush" Value="#64748B"/>
+        </Style>
+
+        <Style Selector="Button.reminder-mode.on">
+            <Setter Property="Background" Value="#1D4ED8"/>
+            <Setter Property="BorderBrush" Value="#1D4ED8"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Button.reminder-mode /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.reminder-mode.on /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#1D4ED8"/>
+            <Setter Property="BorderBrush" Value="#1D4ED8"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Button.reminder-cancel">
+            <Setter Property="MinWidth" Value="88"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.reminder-cancel /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.reminder-cancel:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="BorderBrush" Value="#64748B"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+        </Style>
+
+        <Style Selector="Button.reminder-set">
+            <Setter Property="MinWidth" Value="88"/>
+            <Setter Property="Height" Value="36"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="#2563EB"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.reminder-set /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="BorderBrush" Value="#2563EB"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.reminder-set:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#3B82F6"/>
+            <Setter Property="BorderBrush" Value="#3B82F6"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Button.reminder-set:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="#1D4ED8"/>
+            <Setter Property="BorderBrush" Value="#1D4ED8"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Button.reminder-cancel TextBlock">
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="#CBD5E1"/>
+        </Style>
+
+        <Style Selector="Button.reminder-set TextBlock">
+            <Setter Property="TextAlignment" Value="Center"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="Button.reminder-cancel:pointerover TextBlock">
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+        </Style>
+
+        <Style Selector="Calendar TextBlock">
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton:inactive TextBlock">
+            <Setter Property="Foreground" Value="#475569"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton:today:not(:selected) TextBlock">
+            <Setter Property="Foreground" Value="#93C5FD"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton:selected TextBlock">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
 
         <Style Selector="TextBox.search">
@@ -302,6 +581,42 @@
             <Setter Property="Foreground" Value="#94A3B8"/>
             <Setter Property="HorizontalAlignment" Value="Center"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="Button.empty-add">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="28"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Foreground" Value="#475569"/>
+        </Style>
+
+        <Style Selector="Button.empty-add:pointerover">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#64748B"/>
+        </Style>
+
+        <Style Selector="Button.empty-add:pressed">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="#94A3B8"/>
+        </Style>
+
+        <Style Selector="Button.empty-add TextBlock">
+            <Setter Property="FontSize" Value="92"/>
+            <Setter Property="FontWeight" Value="Light"/>
+            <Setter Property="Foreground" Value="#475569"/>
+        </Style>
+
+        <Style Selector="Button.empty-add:pointerover TextBlock">
+            <Setter Property="Foreground" Value="#64748B"/>
+        </Style>
+
+        <Style Selector="Button.empty-add:pressed TextBlock">
+            <Setter Property="Foreground" Value="#94A3B8"/>
         </Style>
 
     </UserControl.Styles>
@@ -387,10 +702,98 @@
                         VerticalAlignment="Center">
                     <Button.Flyout>
                         <Flyout Placement="BottomEdgeAlignedLeft"
+                                FlyoutPresenterClasses="app-popup"
                                 Opened="DeadlineFlyout_Opened">
-                            <Calendar x:Name="DeadlineCalendar"
-                                      SelectionMode="SingleDate"
-                                      SelectedDatesChanged="DeadlineCalendar_Changed"/>
+                            <StackPanel Spacing="10"
+                                        Width="294"
+                                        KeyDown="DeadlineEditor_KeyDown">
+                                <Calendar x:Name="DeadlineCalendar"
+                                          SelectionMode="SingleDate"/>
+                                <TextBlock Text="Time"
+                                           Classes="meta-label"/>
+                                <StackPanel Orientation="Horizontal"
+                                            Spacing="8">
+                                    <TextBox x:Name="DeadlineHourBox"
+                                             Classes="reminder-time"
+                                             PlaceholderText="09"/>
+                                    <TextBlock Text=":"
+                                               FontSize="16"
+                                               VerticalAlignment="Center"
+                                               Foreground="#94A3B8"/>
+                                    <TextBox x:Name="DeadlineMinuteBox"
+                                             Classes="reminder-time"
+                                             PlaceholderText="00"/>
+                                    <Button x:Name="DeadlineAmButton"
+                                            Classes="reminder-choice"
+                                            Content="AM"
+                                            Click="DeadlineMeridiem_Click"/>
+                                    <Button x:Name="DeadlinePmButton"
+                                            Classes="reminder-choice"
+                                            Content="PM"
+                                            Click="DeadlineMeridiem_Click"/>
+                                </StackPanel>
+                                <TextBlock Text="Notify"
+                                           Classes="meta-label"/>
+                                <Grid ColumnDefinitions="*,*,*"
+                                      ColumnSpacing="8">
+                                    <Button x:Name="DeadlineNotifyNoneButton"
+                                            Classes="reminder-mode"
+                                            Content="None"
+                                            Click="DeadlineNotify_Click"/>
+                                    <Button x:Name="DeadlineNotifyOnButton"
+                                            Grid.Column="1"
+                                            Classes="reminder-mode"
+                                            Content="On time"
+                                            Click="DeadlineNotify_Click"/>
+                                    <Button x:Name="DeadlineNotifyBeforeButton"
+                                            Grid.Column="2"
+                                            Classes="reminder-mode"
+                                            Content="Before"
+                                            Click="DeadlineNotify_Click"/>
+                                </Grid>
+                                <StackPanel x:Name="DeadlineLeadPanel"
+                                            Orientation="Horizontal"
+                                            Spacing="8"
+                                            IsVisible="False">
+                                    <TextBox x:Name="DeadlineLeadBox"
+                                             Classes="reminder-time"
+                                             Width="72"
+                                             MaxLength="3"
+                                             Text="30"/>
+                                    <Button x:Name="DeadlineLeadMinutesButton"
+                                            Classes="reminder-mode"
+                                            Content="minutes"
+                                            Click="DeadlineLeadUnit_Click"/>
+                                    <Button x:Name="DeadlineLeadHoursButton"
+                                            Classes="reminder-mode"
+                                            Content="hours"
+                                            Click="DeadlineLeadUnit_Click"/>
+                                </StackPanel>
+                                <Button x:Name="DeadlineSilentButton"
+                                        Classes="reminder-mode"
+                                        Content="Silent"
+                                        HorizontalAlignment="Left"
+                                        MinWidth="120"
+                                        Click="DeadlineSilent_Click"/>
+                                <TextBlock Text="No sound for this deadline"
+                                           FontSize="11"
+                                           Foreground="#64748B"/>
+                                <TextBlock x:Name="DeadlineError"
+                                           TextWrapping="Wrap"
+                                           FontSize="12"
+                                           Foreground="#F87171"
+                                           IsVisible="False"/>
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Right"
+                                            Spacing="8">
+                                    <Button Content="Cancel"
+                                            Classes="reminder-cancel"
+                                            Click="DeadlineCancel_Click"/>
+                                    <Button Content="Set"
+                                            Classes="reminder-set"
+                                            Click="DeadlineSet_Click"/>
+                                </StackPanel>
+                            </StackPanel>
                         </Flyout>
                     </Button.Flyout>
                 </Button>
@@ -401,6 +804,142 @@
                         ToolTip.Tip="Clear deadline"
                         IsVisible="False"
                         Click="ClearDeadline_Click"/>
+                <TextBlock Text=" · "
+                           Classes="page-subtitle"
+                           VerticalAlignment="Center"
+                           Margin="4,0,0,0"/>
+                <Button x:Name="ReminderButton"
+                        Classes="notes-link"
+                        Content="Set reminder"
+                        MinHeight="0"
+                        FontSize="13"
+                        VerticalAlignment="Center">
+                    <Button.Flyout>
+                        <Flyout Placement="BottomEdgeAlignedLeft"
+                                FlyoutPresenterClasses="app-popup"
+                                Opened="ReminderFlyout_Opened">
+                            <StackPanel Spacing="10"
+                                        Width="294"
+                                        KeyDown="ReminderEditor_KeyDown">
+                                <StackPanel.Resources>
+                                    <SolidColorBrush x:Key="ComboBoxDropDownBackground" Color="#0F172A"/>
+                                    <SolidColorBrush x:Key="ComboBoxDropDownBorderBrush" Color="#334155"/>
+                                    <SolidColorBrush x:Key="ComboBoxItemForeground" Color="#E2E8F0"/>
+                                    <SolidColorBrush x:Key="ComboBoxItemBackground" Color="Transparent"/>
+                                    <SolidColorBrush x:Key="ComboBoxItemBackgroundPointerOver" Color="#1E293B"/>
+                                    <SolidColorBrush x:Key="ComboBoxItemForegroundPointerOver" Color="#F8FAFC"/>
+                                    <SolidColorBrush x:Key="ComboBoxItemBackgroundPressed" Color="#172033"/>
+                                    <SolidColorBrush x:Key="ComboBoxItemForegroundPressed" Color="#F8FAFC"/>
+                                    <SolidColorBrush x:Key="ComboBoxItemBackgroundSelected" Color="#1E3A8A"/>
+                                    <SolidColorBrush x:Key="ComboBoxItemForegroundSelected" Color="#FFFFFF"/>
+                                    <SolidColorBrush x:Key="ComboBoxItemBackgroundSelectedPointerOver" Color="#1D4ED8"/>
+                                    <SolidColorBrush x:Key="ComboBoxItemForegroundSelectedPointerOver" Color="#FFFFFF"/>
+                                    <SolidColorBrush x:Key="ComboBoxItemBackgroundSelectedPressed" Color="#1E40AF"/>
+                                    <SolidColorBrush x:Key="ComboBoxItemForegroundSelectedPressed" Color="#FFFFFF"/>
+                                </StackPanel.Resources>
+                                <TextBlock Text="Repeat"
+                                           Classes="meta-label"/>
+                                <Grid ColumnDefinitions="*,*"
+                                      ColumnSpacing="8">
+                                    <Button x:Name="ReminderOnceButton"
+                                            Classes="reminder-mode"
+                                            Content="One time"
+                                            Click="ReminderMode_Click"/>
+                                    <Button x:Name="ReminderRepeatButton"
+                                            Grid.Column="1"
+                                            Classes="reminder-mode"
+                                            Content="Occurrence"
+                                            Click="ReminderMode_Click"/>
+                                </Grid>
+                                <StackPanel x:Name="ReminderOncePanel"
+                                            Spacing="10">
+                                    <Calendar x:Name="ReminderCalendar"
+                                              SelectionMode="SingleDate"/>
+                                    <TextBlock Text="Time"
+                                               Classes="meta-label"/>
+                                    <StackPanel Orientation="Horizontal"
+                                                Spacing="8">
+                                        <TextBox x:Name="ReminderHourBox"
+                                                 Classes="reminder-time"
+                                                 PlaceholderText="09"/>
+                                        <TextBlock Text=":"
+                                                   FontSize="16"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="#94A3B8"/>
+                                        <TextBox x:Name="ReminderMinuteBox"
+                                                 Classes="reminder-time"
+                                                 PlaceholderText="00"/>
+                                        <Button x:Name="ReminderAmButton"
+                                                Classes="reminder-choice"
+                                                Content="AM"
+                                                Click="ReminderMeridiem_Click"/>
+                                        <Button x:Name="ReminderPmButton"
+                                                Classes="reminder-choice"
+                                                Content="PM"
+                                                Click="ReminderMeridiem_Click"/>
+                                    </StackPanel>
+                                    <TextBlock Text="1–12 with AM/PM, or 00–23"
+                                               FontSize="11"
+                                               Foreground="#64748B"/>
+                                </StackPanel>
+                                <StackPanel x:Name="ReminderIntervalPanel"
+                                            Spacing="8"
+                                            IsVisible="False">
+                                    <TextBlock Text="Every"
+                                               Classes="meta-label"/>
+                                    <StackPanel Orientation="Horizontal"
+                                                Spacing="8">
+                                        <TextBox x:Name="ReminderIntervalBox"
+                                                 Classes="meta reminder-count"
+                                                 Width="72"
+                                                 MaxLength="3"
+                                                 Text="1"
+                                                 HorizontalContentAlignment="Center"/>
+                                        <ComboBox x:Name="ReminderIntervalUnit"
+                                                  Classes="filter"
+                                                  Width="140"
+                                                  SelectedIndex="1">
+                                            <ComboBoxItem Content="minutes"/>
+                                            <ComboBoxItem Content="hours"/>
+                                            <ComboBoxItem Content="days"/>
+                                        </ComboBox>
+                                    </StackPanel>
+                                </StackPanel>
+                                <Button x:Name="ReminderSilentButton"
+                                        Classes="reminder-mode"
+                                        Content="Silent"
+                                        HorizontalAlignment="Left"
+                                        MinWidth="120"
+                                        Click="ReminderSilent_Click"/>
+                                <TextBlock Text="No sound for this reminder"
+                                           FontSize="11"
+                                           Foreground="#64748B"/>
+                                <TextBlock x:Name="ReminderError"
+                                           TextWrapping="Wrap"
+                                           FontSize="12"
+                                           Foreground="#F87171"
+                                           IsVisible="False"/>
+                                <StackPanel Orientation="Horizontal"
+                                            HorizontalAlignment="Right"
+                                            Spacing="8">
+                                    <Button Content="Cancel"
+                                            Classes="reminder-cancel"
+                                            Click="ReminderCancel_Click"/>
+                                    <Button Content="Set"
+                                            Classes="reminder-set"
+                                            Click="ReminderSet_Click"/>
+                                </StackPanel>
+                            </StackPanel>
+                        </Flyout>
+                    </Button.Flyout>
+                </Button>
+                <Button x:Name="ClearReminderButton"
+                        Classes="deadline-clear"
+                        Content="×"
+                        Margin="4,0,0,0"
+                        ToolTip.Tip="Clear reminder"
+                        IsVisible="False"
+                        Click="ClearReminder_Click"/>
             </StackPanel>
 
             <Button x:Name="AddDetailsButton"
@@ -482,43 +1021,55 @@
 
         <!-- ACTION BAR -->
 <Grid Grid.Row="1"
-      ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,*,Auto"
-      ColumnSpacing="10">
+      ColumnDefinitions="*,Auto">
 
-    <Button Grid.Column="0"
-            Content="+  Add Check"
-            Classes="action secondary"
-            Click="AddCheck_Click"/>
+    <StackPanel Orientation="Horizontal"
+                Spacing="10"
+                VerticalAlignment="Center">
+        <Button Content="+  Add Check"
+                Classes="action secondary"
+                Click="AddCheck_Click"/>
 
-    <Button Grid.Column="1"
-            Content="Save"
-            Classes="action secondary"
-            Click="Save_Click"/>
+        <Button x:Name="SaveButton"
+                Content="Save"
+                Classes="action secondary"
+                Click="Save_Click"/>
 
-    <Button Grid.Column="2"
-            Content="Save As"
-            Classes="action secondary"
-            Click="SaveAs_Click"/>
+        <Button Content="Save As"
+                Classes="action secondary"
+                Click="SaveAs_Click"/>
 
-    <Button Grid.Column="3"
-            Content="Copy"
-            Classes="action secondary"
-            ToolTip.Tip="Choose checks to copy to another open checklist, or save them as a new file"
-            Click="Copy_Click"/>
+        <Button Content="Save as template"
+                Classes="action secondary"
+                ToolTip.Tip="Save this checklist as a home template"
+                Click="SaveAsTemplate_Click"/>
 
-    <Button Grid.Column="4"
-            Content="Delete"
-            Classes="action secondary"
-            ToolTip.Tip="Choose checks to remove together"
-            Click="DeleteChecks_Click"/>
+        <Button x:Name="CopyButton"
+                Content="Copy"
+                Classes="action secondary"
+                ToolTip.Tip="Choose checks to copy to another open checklist, or save them as a new file"
+                Click="Copy_Click"/>
 
-    <Button x:Name="FilterToggleButton"
-            Grid.Column="5"
-            Content="Hide filters"
-            Classes="action secondary"
-            Click="FilterToggle_Click"/>
+        <Button x:Name="DeleteChecksButton"
+                Content="Delete"
+                Classes="action secondary"
+                ToolTip.Tip="Choose checks to remove together"
+                Click="DeleteChecks_Click"/>
 
-    <Button Grid.Column="7"
+        <Button x:Name="RearrangeButton"
+                Content="Rearrange"
+                Classes="action secondary"
+                ToolTip.Tip="Drag checks into a new order"
+                Click="Rearrange_Click"/>
+
+        <Button x:Name="FilterToggleButton"
+                Content="Hide filters"
+                Classes="action secondary"
+                Click="FilterToggle_Click"/>
+    </StackPanel>
+
+    <Button x:Name="CompleteButton"
+            Grid.Column="1"
             Content="✓  Complete"
             Classes="action primary"
             Click="Complete_Click"/>
@@ -571,10 +1122,10 @@
                                   Classes="filter"
                                   SelectionChanged="View_Changed">
                             <ComboBoxItem Content="Any priority"/>
-                            <ComboBoxItem Content="Critical"/>
-                            <ComboBoxItem Content="Required"/>
-                            <ComboBoxItem Content="Conditional"/>
-                            <ComboBoxItem Content="Review"/>
+                            <ComboBoxItem Content="Critical" Foreground="#F87171"/>
+                            <ComboBoxItem Content="Required" Foreground="#FBBF24"/>
+                            <ComboBoxItem Content="Conditional" Foreground="#38BDF8"/>
+                            <ComboBoxItem Content="Review" Foreground="#C4B5FD"/>
                         </ComboBox>
                     </StackPanel>
 
@@ -624,7 +1175,8 @@
                             <Border Classes="check-item"
                                     CornerRadius="8"
                                     Padding="12"
-                                    Margin="0,0,0,10">
+                                    Margin="0,0,0,10"
+                                    Loaded="CheckItem_Loaded">
 
                                 <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto"
                                       ColumnSpacing="12">
@@ -633,7 +1185,8 @@
                                     <CheckBox Grid.Column="0"
                                               IsChecked="{Binding IsCompleted}"
                                               Click="CheckBox_Click"
-                                              VerticalAlignment="Center"/>
+                                              VerticalAlignment="Top"
+                                              Margin="0,2,0,0"/>
 
 
                                     <!-- Title + Priority -->
@@ -644,28 +1197,28 @@
     <TextBlock Text="{Binding Title}"
                Classes="check-title"/>
 
-    <TextBlock Text="{Binding Detail}"
-               Classes="priority"/>
-
     <StackPanel Orientation="Horizontal"
-                Spacing="4">
-        <Button Classes="notes-link"
-                Content="Pick deadline"
-                FontSize="13"
-                Loaded="ItemDeadlineLink_Loaded">
-            <Button.Flyout>
-                <Flyout Placement="BottomEdgeAlignedLeft"
-                        Opened="ItemDeadlineFlyout_Opened">
-                    <Calendar SelectionMode="SingleDate"
-                              SelectedDatesChanged="ItemDeadlineCalendar_Changed"/>
-                </Flyout>
-            </Button.Flyout>
-        </Button>
-        <Button Classes="deadline-clear"
-                Content="×"
-                ToolTip.Tip="Clear deadline"
-                IsVisible="False"
-                Click="ClearItemDeadline_Click"/>
+                Spacing="6">
+        <TextBlock Text="{Binding Category}"
+                   Classes="priority"
+                   VerticalAlignment="Center"
+                   Loaded="CategoryMeta_Loaded"/>
+        <TextBlock Text="·"
+                   Classes="priority"
+                   VerticalAlignment="Center"
+                   Loaded="CategoryMeta_Loaded"/>
+        <Border Classes="priority-chip"
+                Loaded="PriorityChip_Loaded">
+            <TextBlock Text="{Binding Priority}"
+                       Classes="priority-label"/>
+        </Border>
+        <TextBlock Text="·"
+                   Classes="priority"
+                   VerticalAlignment="Center"
+                   Loaded="DeadlineSeparator_Loaded"/>
+        <TextBlock Classes="priority item-deadline"
+                   VerticalAlignment="Center"
+                   Loaded="ItemDeadline_Loaded"/>
     </StackPanel>
 
 <StackPanel Spacing="6"
@@ -682,28 +1235,64 @@
 
 </StackPanel>
 
+<ItemsControl ItemsSource="{Binding LinkedSubtasks}"
+              Margin="0,8,0,0"
+              IsVisible="{Binding HasLinks}">
+    <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="models:ChecklistSubtask">
+            <Button Classes="subtask-link"
+                    Content="{Binding LinkLabel}"
+                    Margin="0,0,0,4"
+                    Click="OpenLinkedSubtask_Click"
+                    Loaded="LinkedSubtask_Loaded"/>
+        </DataTemplate>
+    </ItemsControl.ItemTemplate>
+</ItemsControl>
+
+<ItemsControl ItemsSource="{Binding ManualSubtasks}"
+              Margin="0,4,0,0"
+              IsVisible="{Binding HasManualSubtasks}">
+    <ItemsControl.ItemTemplate>
+        <DataTemplate x:DataType="models:ChecklistSubtask">
+            <Grid ColumnDefinitions="Auto,*"
+                  ColumnSpacing="8"
+                  Margin="0,0,0,4">
+                <CheckBox IsChecked="{Binding IsCompleted}"
+                          Click="SubtaskCheck_Click"
+                          VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1"
+                           Text="{Binding Title}"
+                           Classes="subtask-title"/>
+            </Grid>
+        </DataTemplate>
+    </ItemsControl.ItemTemplate>
+</ItemsControl>
+
 </StackPanel>
 
 
                                     <StackPanel Grid.Column="2"
                                                 Orientation="Horizontal"
                                                 Spacing="4"
-                                                VerticalAlignment="Center">
+                                                VerticalAlignment="Top">
                                         <Button Classes="icon move"
                                                 Content="↑"
                                                 ToolTip.Tip="Move up"
                                                 Tag="{Binding}"
+                                                IsVisible="False"
                                                 Click="MoveUp_Click"/>
                                         <Button Classes="icon move"
                                                 Content="↓"
                                                 ToolTip.Tip="Move down"
                                                 Tag="{Binding}"
+                                                IsVisible="False"
                                                 Click="MoveDown_Click"/>
                                     </StackPanel>
 
                                     <!-- Edit -->
                                     <Button Grid.Column="3"
                                             Classes="icon"
+                                            VerticalAlignment="Top"
                                             ToolTip.Tip="Edit"
                                             Tag="{Binding}"
                                             Click="EditCheck_Click">
@@ -721,6 +1310,7 @@
                                     <!-- Delete -->
                                     <Button Grid.Column="4"
                                             Classes="icon delete"
+                                            VerticalAlignment="Top"
                                             Content="🗑"
                                             ToolTip.Tip="Remove"
                                             Tag="{Binding}"
@@ -737,6 +1327,13 @@
                 </ItemsControl>
 
             </ScrollViewer>
+
+            <Button x:Name="EmptyAddButton"
+                    Classes="empty-add"
+                    IsVisible="False"
+                    Click="AddCheck_Click">
+                <TextBlock Text="+"/>
+            </Button>
 
             <TextBlock x:Name="EmptyFilterText"
                        Classes="empty-filter"

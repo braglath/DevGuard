@@ -83,6 +83,7 @@
         <Button Grid.Row="3"
                 Content="Close"
                 Classes="dialog-button"
+                IsDefault="True"
                 HorizontalAlignment="Right"
                 Click="Close_Click"/>
 

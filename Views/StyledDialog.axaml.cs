@@ -1,4 +1,6 @@
+using System;
 using Avalonia.Controls;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 
 namespace SuperDev.Views;
@@ -13,6 +15,7 @@ public enum ClosePromptResult
 public partial class StyledDialog : Window
 {
    private bool _choiceDialog;
+   private bool _closed;
 
    public StyledDialog(
        string title,
@@ -27,6 +30,7 @@ public partial class StyledDialog : Window
       SecondaryButton.IsVisible = false;
 
       PrimaryButton.Content = "OK";
+      PrimaryButton.IsDefault = true;
    }
 
    public StyledDialog(
@@ -73,10 +77,37 @@ public partial class StyledDialog : Window
       PrimaryButton.Content = saveText;
    }
 
+   protected override void OnOpened(EventArgs e)
+   {
+      base.OnOpened(e);
+      if (HasSingleOption)
+         PrimaryButton.Focus();
+   }
+
+   protected override void OnKeyDown(KeyEventArgs e)
+   {
+      base.OnKeyDown(e);
+      if (e.Handled || !HasSingleOption)
+         return;
+
+      if (e.Key is not (Key.Enter or Key.Return))
+         return;
+
+      e.Handled = true;
+      PrimaryButton_Click(PrimaryButton, new RoutedEventArgs());
+   }
+
+   private bool HasSingleOption =>
+       !SecondaryButton.IsVisible && !TertiaryButton.IsVisible;
+
    private void PrimaryButton_Click(
        object? sender,
        RoutedEventArgs e)
    {
+      if (_closed)
+         return;
+
+      _closed = true;
       if (_choiceDialog)
          Close(ClosePromptResult.Save);
       else

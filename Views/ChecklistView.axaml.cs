@@ -1,12 +1,13 @@
 
 using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
 using System.Threading.Tasks;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -44,13 +45,19 @@ public partial class ChecklistView : UserControl
    }
 
    private readonly WorkType _workType;
+   private readonly string? _templateName;
    private readonly ObservableCollection<ChecklistItem> _checklist;
    private readonly ObservableCollection<ChecklistItem> _visible = new();
    private bool _viewReady;
    private bool _detailsOpen;
    private bool _filtersVisible = true;
    private bool _headerDetailsVisible = true;
-   private bool _deadlineOpening;
+   private bool _syncingCheck;
+   private bool _editOpen;
+   private bool _documentCompleted;
+   private bool _completionOfferOpen;
+   private ChecklistItem? _selectedItem;
+   private readonly HashSet<Key> _itemKeysDown = new();
    private TopLevel? _inputRoot;
    public string WorkTitle { get; private set; }
 
@@ -62,7 +69,21 @@ public partial class ChecklistView : UserControl
 
    public DateOnly? Deadline { get; private set; }
 
+   public int? DeadlineMinute { get; private set; }
+
+   public int? NotifyBeforeMinutes { get; private set; }
+
+   public bool DeadlineSilent { get; private set; }
+
+   public DateTime? ReminderOn { get; private set; }
+
+   public int ReminderEveryMinutes { get; private set; }
+
+   public bool ReminderSilent { get; private set; }
+
    public WorkType WorkType => _workType;
+
+   public string? TemplateName => _templateName;
 
    public IReadOnlyList<ChecklistItem> Items => _checklist;
 
@@ -74,7 +95,18 @@ public partial class ChecklistView : UserControl
 
    public event EventHandler? SaveAsRequested;
 
+   public event EventHandler? SaveAsTemplateRequested;
+
    public event EventHandler? CopyRequested;
+
+   public event EventHandler<string>? SubtasksRequired;
+
+   public event EventHandler<ChecklistSubtask>? LinkedSubtaskOpenRequested;
+
+   public Func<Window, Task<ChecklistSubtask?>>? RequestLink { get; set; }
+
+   public void SetDocumentCompleted(bool completed) =>
+       _documentCompleted = completed;
 
    public bool HasIncompleteRequiredChecks() =>
        _checklist.Any(item =>
@@ -84,21 +116,35 @@ public partial class ChecklistView : UserControl
 
    public ChecklistView(
        WorkType workType,
+       string? templateName,
        string workTitle,
        string branchName,
        string repositoryUrl,
        string pullRequestUrl,
        DateOnly? deadline,
+       int? deadlineMinute,
+       int? notifyBeforeMinutes,
+       bool deadlineSilent,
+       DateTime? reminderOn,
+       int reminderEveryMinutes,
+       bool reminderSilent,
        List<ChecklistItem> checklist)
    {
       InitializeComponent();
 
       _workType = workType;
+      _templateName = string.IsNullOrWhiteSpace(templateName) ? null : templateName.Trim();
       WorkTitle = workTitle;
       BranchName = branchName;
       RepositoryUrl = repositoryUrl;
       PullRequestUrl = pullRequestUrl;
       Deadline = deadline;
+      DeadlineMinute = deadline is null ? null : deadlineMinute;
+      NotifyBeforeMinutes = deadline is null ? null : notifyBeforeMinutes;
+      DeadlineSilent = deadline is not null && deadlineSilent;
+      ReminderOn = reminderOn;
+      ReminderEveryMinutes = reminderEveryMinutes < 0 ? 0 : reminderEveryMinutes;
+      ReminderSilent = reminderSilent;
       _checklist = new ObservableCollection<ChecklistItem>(checklist);
 
       WorkflowTitleBox.Text = workTitle;
@@ -120,21 +166,26 @@ public partial class ChecklistView : UserControl
 
       ApplyView();
       UpdateProgress();
+      AddHandler(KeyDownEvent, ItemShortcutKeyDown, RoutingStrategies.Tunnel);
+      AddHandler(KeyUpEvent, ItemShortcutKeyUp, RoutingStrategies.Tunnel);
    }
 
-   private static string FormatTemplateLine(WorkType workType, string? reminder)
+   private string FormatTemplateLine(WorkType workType, string? reminder)
    {
-      var template = workType switch
-      {
-         WorkType.Bug => "Bug Fix",
-         WorkType.Feature => "Feature",
-         WorkType.Development => "Development",
-         WorkType.Testing => "Testing",
-         WorkType.PullRequest => "Pull Request",
-         WorkType.Blank => "Blank Checklist",
-         WorkType.Daily => "Daily",
-         _ => string.Empty
-      };
+      var template = !string.IsNullOrWhiteSpace(_templateName)
+          ? _templateName
+          : workType switch
+          {
+             WorkType.Bug => "Bug Fix",
+             WorkType.Feature => "Feature",
+             WorkType.Development => "Development",
+             WorkType.Testing => "Testing",
+             WorkType.PullRequest => "Pull Request",
+             WorkType.Blank => "Blank Checklist",
+             WorkType.Daily => "Daily",
+             WorkType.Custom => "Custom",
+             _ => string.Empty
+          };
 
       if (string.IsNullOrWhiteSpace(reminder))
          return template;
@@ -148,25 +199,400 @@ public partial class ChecklistView : UserControl
    {
       WorkflowDescription.Text = FormatTemplateLine(_workType, reminder: null);
       ApplyDeadlineLink(DeadlineButton, Deadline);
+      ApplyReminderLink();
    }
 
-   private void DeadlineFlyout_Opened(object? sender, EventArgs e) =>
-       ShowDeadlineCalendar(DeadlineCalendar, Deadline);
-
-   private void DeadlineCalendar_Changed(object? sender, SelectionChangedEventArgs e)
+   private void DeadlineFlyout_Opened(object? sender, EventArgs e)
    {
-      if (_deadlineOpening || DeadlineCalendar.SelectedDate is not { } selected)
+      DeadlineError.IsVisible = false;
+      var selected = Deadline is { } date ? DeadlineValue.ToCalendar(date) : DateTime.Today;
+      DeadlineCalendar.SelectedDate = Deadline is null ? null : selected;
+      DeadlineCalendar.DisplayDate = selected;
+
+      var minute = DeadlineMinute ?? (9 * 60);
+      DeadlineValue.SplitClock(minute, out var hour, out var clockMinute, out var pm);
+      DeadlineHourBox.Text = hour.ToString(CultureInfo.InvariantCulture);
+      DeadlineMinuteBox.Text = clockMinute.ToString("00", CultureInfo.InvariantCulture);
+      SetDeadlineMeridiem(pm);
+
+      if (NotifyBeforeMinutes is int lead && lead > 0)
+      {
+         DeadlineValue.SplitLead(lead, out var count, out var unit);
+         DeadlineLeadBox.Text = count.ToString(CultureInfo.InvariantCulture);
+         ShowDeadlineNotify(2, unit == 1);
+      }
+      else if (NotifyBeforeMinutes == 0)
+      {
+         DeadlineLeadBox.Text = "30";
+         ShowDeadlineNotify(1, hours: false);
+      }
+      else
+      {
+         DeadlineLeadBox.Text = "30";
+         ShowDeadlineNotify(Deadline is null ? 1 : 0, hours: false);
+      }
+
+      SetChoice(DeadlineSilentButton, DeadlineSilent);
+   }
+
+   private void DeadlineSilent_Click(object? sender, RoutedEventArgs e) =>
+       SetChoice(DeadlineSilentButton, !DeadlineSilentButton.Classes.Contains("on"));
+
+   private void DeadlineMeridiem_Click(object? sender, RoutedEventArgs e) =>
+       SetDeadlineMeridiem(sender == DeadlinePmButton);
+
+   private void DeadlineNotify_Click(object? sender, RoutedEventArgs e)
+   {
+      var mode = sender == DeadlineNotifyBeforeButton ? 2 : sender == DeadlineNotifyOnButton ? 1 : 0;
+      ShowDeadlineNotify(mode, DeadlineLeadHoursButton.Classes.Contains("on"));
+   }
+
+   private void DeadlineLeadUnit_Click(object? sender, RoutedEventArgs e) =>
+       ShowDeadlineNotify(2, sender == DeadlineLeadHoursButton);
+
+   private void DeadlineCancel_Click(object? sender, RoutedEventArgs e) =>
+       DeadlineButton.Flyout?.Hide();
+
+   private void DeadlineSet_Click(object? sender, RoutedEventArgs e) =>
+       CommitDeadlineFromEditor();
+
+   private void DeadlineEditor_KeyDown(object? sender, KeyEventArgs e)
+   {
+      if (e.Key == Key.Escape)
+      {
+         e.Handled = true;
+         DeadlineButton.Flyout?.Hide();
+         return;
+      }
+
+      if (e.Key != Key.Enter && e.Key != Key.Return)
          return;
 
-      var next = DeadlineValue.FromCalendar(selected);
+      e.Handled = true;
+      CommitDeadlineFromEditor();
+   }
+
+   private void ShowDeadlineNotify(int mode, bool hours)
+   {
+      DeadlineLeadPanel.IsVisible = mode == 2;
+      SetChoice(DeadlineNotifyNoneButton, mode == 0);
+      SetChoice(DeadlineNotifyOnButton, mode == 1);
+      SetChoice(DeadlineNotifyBeforeButton, mode == 2);
+      SetChoice(DeadlineLeadMinutesButton, !hours);
+      SetChoice(DeadlineLeadHoursButton, hours);
+   }
+
+   private void CommitDeadlineFromEditor()
+   {
+      if (DeadlineCalendar.SelectedDate is not { } selected)
+      {
+         DeadlineError.Text = "Pick a date.";
+         DeadlineError.IsVisible = true;
+         return;
+      }
+
+      if (!DeadlineValue.TryClock(
+              DeadlineHourBox.Text,
+              DeadlineMinuteBox.Text,
+              DeadlinePmButton.Classes.Contains("on"),
+              out var minute,
+              out var hourLabel,
+              out var pm,
+              out var error))
+      {
+         DeadlineError.Text = error;
+         DeadlineError.IsVisible = true;
+         return;
+      }
+
+      int? lead = null;
+      if (DeadlineNotifyBeforeButton.Classes.Contains("on"))
+      {
+         if (!DeadlineValue.TryLead(DeadlineLeadBox.Text, DeadlineLeadHoursButton.Classes.Contains("on") ? 1 : 0, out var before, out error))
+         {
+            DeadlineError.Text = error;
+            DeadlineError.IsVisible = true;
+            return;
+         }
+
+         lead = before;
+      }
+      else if (DeadlineNotifyOnButton.Classes.Contains("on"))
+      {
+         lead = 0;
+      }
+
+      DeadlineHourBox.Text = hourLabel;
+      DeadlineMinuteBox.Text = (minute % 60).ToString("00", CultureInfo.InvariantCulture);
+      SetDeadlineMeridiem(pm);
+      DeadlineError.IsVisible = false;
       DeadlineButton.Flyout?.Hide();
 
-      if (Deadline == next)
+      var next = DeadlineValue.FromCalendar(selected);
+      var silent = DeadlineSilentButton.Classes.Contains("on");
+      if (Deadline == next && DeadlineMinute == minute && NotifyBeforeMinutes == lead && DeadlineSilent == silent)
          return;
 
       Deadline = next;
+      DeadlineMinute = minute;
+      NotifyBeforeMinutes = lead;
+      DeadlineSilent = silent;
       UpdateDeadlinePresentation();
       DocumentEdited?.Invoke(this, EventArgs.Empty);
+   }
+
+   private void SetDeadlineMeridiem(bool pm)
+   {
+      SetChoice(DeadlinePmButton, pm);
+      SetChoice(DeadlineAmButton, !pm);
+   }
+
+   private static void SetChoice(Button button, bool selected)
+   {
+      if (selected)
+         button.Classes.Add("on");
+      else
+         button.Classes.Remove("on");
+   }
+
+   private void ReminderFlyout_Opened(object? sender, EventArgs e)
+   {
+      ReminderError.IsVisible = false;
+      var local = ReminderOn?.ToLocalTime();
+      var selected = local?.Date ?? DateTime.Today;
+      ReminderCalendar.SelectedDate = selected;
+      ReminderCalendar.DisplayDate = selected;
+
+      var hour = local?.Hour ?? 9;
+      ReminderHourBox.Text = (hour % 12 == 0 ? 12 : hour % 12).ToString(CultureInfo.InvariantCulture);
+      ReminderMinuteBox.Text = (local?.Minute ?? 0).ToString("00", CultureInfo.InvariantCulture);
+      SetMeridiem(hour >= 12);
+      SetChoice(ReminderSilentButton, ReminderSilent);
+
+      if (ReminderEveryMinutes > 0)
+      {
+         SplitInterval(ReminderEveryMinutes, out var count, out var unit);
+         ReminderIntervalBox.Text = count.ToString(CultureInfo.InvariantCulture);
+         ReminderIntervalUnit.SelectedIndex = unit;
+         ShowReminderMode(repeating: true);
+      }
+      else
+      {
+         ReminderIntervalBox.Text = "1";
+         ReminderIntervalUnit.SelectedIndex = 1;
+         ShowReminderMode(repeating: false);
+      }
+   }
+
+   private void ReminderMeridiem_Click(object? sender, RoutedEventArgs e) =>
+      SetMeridiem(sender == ReminderPmButton);
+
+   private void ReminderMode_Click(object? sender, RoutedEventArgs e) =>
+      ShowReminderMode(repeating: sender == ReminderRepeatButton);
+
+   private void ReminderSilent_Click(object? sender, RoutedEventArgs e) =>
+      SetChoice(ReminderSilentButton, !ReminderSilentButton.Classes.Contains("on"));
+
+   private void ShowReminderMode(bool repeating)
+   {
+      ReminderOncePanel.IsVisible = !repeating;
+      ReminderIntervalPanel.IsVisible = repeating;
+      if (repeating)
+      {
+         ReminderRepeatButton.Classes.Add("on");
+         ReminderOnceButton.Classes.Remove("on");
+      }
+      else
+      {
+         ReminderOnceButton.Classes.Add("on");
+         ReminderRepeatButton.Classes.Remove("on");
+      }
+   }
+
+   private void ReminderCancel_Click(object? sender, RoutedEventArgs e) =>
+      ReminderButton.Flyout?.Hide();
+
+   private void ReminderSet_Click(object? sender, RoutedEventArgs e) =>
+      CommitReminderFromEditor();
+
+   private void ReminderEditor_KeyDown(object? sender, KeyEventArgs e)
+   {
+      if (e.Key == Key.Escape)
+      {
+         e.Handled = true;
+         ReminderButton.Flyout?.Hide();
+         return;
+      }
+
+      if (e.Key != Key.Enter && e.Key != Key.Return)
+         return;
+
+      e.Handled = true;
+      CommitReminderFromEditor();
+   }
+
+   private void ClearReminder_Click(object? sender, RoutedEventArgs e)
+   {
+      if (ReminderOn is null && ReminderEveryMinutes == 0 && !ReminderSilent)
+         return;
+
+      ReminderOn = null;
+      ReminderEveryMinutes = 0;
+      ReminderSilent = false;
+      ApplyReminderLink();
+      DocumentEdited?.Invoke(this, EventArgs.Empty);
+   }
+
+   public bool ApplyExternalReminder(DateTime? nextUtc, int everyMinutes)
+   {
+      if (everyMinutes < 0)
+         everyMinutes = 0;
+
+      if (ReminderOn == nextUtc && ReminderEveryMinutes == everyMinutes)
+         return false;
+
+      ReminderOn = nextUtc;
+      ReminderEveryMinutes = everyMinutes;
+      ApplyReminderLink();
+      return true;
+   }
+
+   private void CommitReminderFromEditor()
+   {
+      if (!TryReadReminder(out var next, out var everyMinutes, out var error))
+      {
+         ReminderError.Text = error;
+         ReminderError.IsVisible = true;
+         return;
+      }
+
+      ReminderError.IsVisible = false;
+      ReminderButton.Flyout?.Hide();
+
+      var silent = ReminderSilentButton.Classes.Contains("on");
+      if (ReminderOn == next && ReminderEveryMinutes == everyMinutes && ReminderSilent == silent)
+         return;
+
+      ReminderOn = next;
+      ReminderEveryMinutes = everyMinutes;
+      ReminderSilent = silent;
+      ApplyReminderLink();
+      DocumentEdited?.Invoke(this, EventArgs.Empty);
+   }
+
+   private bool TryReadReminder(out DateTime nextUtc, out int everyMinutes, out string error)
+   {
+      nextUtc = default;
+      everyMinutes = 0;
+      error = string.Empty;
+
+      if (ReminderIntervalPanel.IsVisible)
+      {
+         if (!int.TryParse(ReminderIntervalBox.Text?.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var count) ||
+             count is < 1 or > 999)
+         {
+            error = "Enter a repeat interval from 1 to 999.";
+            return false;
+         }
+
+         everyMinutes = ReminderIntervalUnit.SelectedIndex switch
+         {
+            2 => count * 1440,
+            1 => count * 60,
+            _ => count
+         };
+
+         if (ReminderEveryMinutes == everyMinutes && ReminderOn is { } existing && existing > DateTime.UtcNow)
+         {
+            nextUtc = existing;
+            return true;
+         }
+
+         var localNow = DateTime.Now;
+         var start = new DateTime(localNow.Year, localNow.Month, localNow.Day, localNow.Hour, localNow.Minute, 0, DateTimeKind.Local);
+         nextUtc = start.AddMinutes(everyMinutes).ToUniversalTime();
+         return true;
+      }
+
+      if (!TryReadClock(out var time))
+      {
+         error = "Enter an hour from 1 to 12, or 00 to 23, and minutes from 00 to 59.";
+         return false;
+      }
+
+      var day = ReminderCalendar.SelectedDate?.Date ?? DateTime.Today;
+      var local = new DateTime(day.Year, day.Month, day.Day, time.Hour, time.Minute, 0, DateTimeKind.Local);
+      nextUtc = local.ToUniversalTime();
+      return true;
+   }
+
+   private bool TryReadClock(out TimeOnly time)
+   {
+      time = default;
+      if (!int.TryParse(ReminderHourBox.Text?.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var hour))
+         return false;
+
+      if (!int.TryParse(ReminderMinuteBox.Text?.Trim(), NumberStyles.None, CultureInfo.InvariantCulture, out var minute) ||
+          minute is < 0 or > 59)
+         return false;
+
+      if (hour is >= 0 and <= 23 && (hour > 12 || hour == 0))
+      {
+         time = new TimeOnly(hour, minute);
+         SetMeridiem(hour >= 12);
+         ReminderHourBox.Text = (hour % 12 == 0 ? 12 : hour % 12).ToString(CultureInfo.InvariantCulture);
+         return true;
+      }
+
+      if (hour is < 1 or > 12)
+         return false;
+
+      var hour24 = hour % 12;
+      if (ReminderPmButton.Classes.Contains("on"))
+         hour24 += 12;
+
+      time = new TimeOnly(hour24, minute);
+      return true;
+   }
+
+   private void SetMeridiem(bool pm)
+   {
+      if (pm)
+      {
+         ReminderPmButton.Classes.Add("on");
+         ReminderAmButton.Classes.Remove("on");
+      }
+      else
+      {
+         ReminderAmButton.Classes.Add("on");
+         ReminderPmButton.Classes.Remove("on");
+      }
+   }
+
+   private static void SplitInterval(int minutes, out int count, out int unitIndex)
+   {
+      if (minutes >= 1440 && minutes % 1440 == 0)
+      {
+         count = minutes / 1440;
+         unitIndex = 2;
+         return;
+      }
+
+      if (minutes >= 60 && minutes % 60 == 0)
+      {
+         count = minutes / 60;
+         unitIndex = 1;
+         return;
+      }
+
+      count = Math.Max(1, minutes);
+      unitIndex = 0;
+   }
+
+   private void ApplyReminderLink()
+   {
+      ReminderButton.Content = ReminderText.ButtonLabel(ReminderOn, ReminderEveryMinutes, ReminderSilent);
+      ClearReminderButton.IsVisible = ReminderOn is not null;
    }
 
    private void ClearDeadline_Click(object? sender, RoutedEventArgs e)
@@ -175,78 +601,17 @@ public partial class ChecklistView : UserControl
          return;
 
       Deadline = null;
+      DeadlineMinute = null;
+      NotifyBeforeMinutes = null;
+      DeadlineSilent = false;
       UpdateDeadlinePresentation();
       DocumentEdited?.Invoke(this, EventArgs.Empty);
    }
 
-   private void ItemDeadlineLink_Loaded(object? sender, RoutedEventArgs e)
+   private void ApplyDeadlineLink(Button link, DateOnly? deadline)
    {
-      if (sender is Button button && button.DataContext is ChecklistItem item)
-         ApplyDeadlineLink(button, item.Deadline);
-   }
-
-   private void ItemDeadlineFlyout_Opened(object? sender, EventArgs e)
-   {
-      if (sender is not Flyout flyout || flyout.Content is not Calendar calendar)
-         return;
-
-      var deadline = flyout.Target?.DataContext is ChecklistItem item
-          ? item.Deadline
-          : null;
-      ShowDeadlineCalendar(calendar, deadline);
-   }
-
-   private void ItemDeadlineCalendar_Changed(object? sender, SelectionChangedEventArgs e)
-   {
-      if (_deadlineOpening || sender is not Calendar calendar || calendar.SelectedDate is not { } selected)
-         return;
-
-      if (calendar.FindAncestorOfType<Popup>()?.PlacementTarget is not Button button ||
-          button.DataContext is not ChecklistItem item)
-         return;
-
-      var next = DeadlineValue.FromCalendar(selected);
-      button.Flyout?.Hide();
-
-      if (item.Deadline == next)
-         return;
-
-      item.Deadline = next;
-      ApplyDeadlineLink(button, next);
-      MarkEdited();
-   }
-
-   private void ClearItemDeadline_Click(object? sender, RoutedEventArgs e)
-   {
-      if (sender is not Button clear || clear.DataContext is not ChecklistItem item || item.Deadline is null)
-         return;
-
-      if (clear.Parent is not Panel panel)
-         return;
-
-      var link = panel.Children.OfType<Button>().FirstOrDefault(button => button != clear);
-      if (link is null)
-         return;
-
-      item.Deadline = null;
-      ApplyDeadlineLink(link, null);
-      MarkEdited();
-   }
-
-   private void ShowDeadlineCalendar(Calendar calendar, DateOnly? deadline)
-   {
-      _deadlineOpening = true;
-      var selected = deadline is { } date ? DeadlineValue.ToCalendar(date) : (DateTime?)null;
-      calendar.SelectedDate = selected;
-      calendar.DisplayDate = selected ?? DateTime.Today;
-      _deadlineOpening = false;
-   }
-
-   private static void ApplyDeadlineLink(Button link, DateOnly? deadline)
-   {
-      link.Content = deadline is { } date
-          ? $"Deadline: {DeadlineValue.Format(date)}"
-          : "Pick deadline";
+      link.Content = DeadlineValue.ButtonLabel(deadline, DeadlineMinute, NotifyBeforeMinutes, DeadlineSilent);
+      SetLate(link, deadline is { } date && DeadlineValue.IsPast(date, DeadlineMinute));
 
       if (link.Parent is not Panel panel)
          return;
@@ -272,23 +637,422 @@ public partial class ChecklistView : UserControl
 
    private void CheckBox_Click(object? sender, RoutedEventArgs e)
    {
+      if (_syncingCheck)
+         return;
+
       if (sender is not CheckBox checkBox ||
           checkBox.DataContext is not ChecklistItem item)
          return;
 
-      item.IsCompleted = checkBox.IsChecked == true;
+      var completed = checkBox.IsChecked == true;
+      if (completed && !item.CanComplete)
+      {
+         SetCheckBox(checkBox, false);
+         item.IsCompleted = false;
+         SelectItem(item);
+         NotifySubtasksRequired(item);
+         return;
+      }
+
+      item.IsCompleted = completed;
+      SelectItem(item);
 
       if (item.IsCompleted)
          SuperDev.SuccessSound.PlayCheck();
 
       MarkEdited();
+      if (item.IsCompleted)
+         _ = OfferChecklistCompletionAsync();
+   }
+
+   private void SubtaskCheck_Click(object? sender, RoutedEventArgs e)
+   {
+      if (_syncingCheck)
+         return;
+
+      if (sender is not CheckBox checkBox ||
+          checkBox.DataContext is not ChecklistSubtask subtask ||
+          subtask.IsLink ||
+          FindOwnerItem(checkBox) is not ChecklistItem item)
+         return;
+
+      subtask.IsCompleted = checkBox.IsChecked == true;
+      if (!item.CanComplete)
+         item.IsCompleted = false;
+
+      SyncParentCheckBox(item);
+      SelectItem(item);
+
+      if (subtask.IsCompleted)
+         SuperDev.SuccessSound.PlayCheck();
+
+      MarkEdited();
+   }
+
+   private void SyncParentCheckBox(ChecklistItem item)
+   {
+      if (FindItemBorder(item) is not { } border)
+         return;
+
+      var box = border.GetVisualDescendants().OfType<CheckBox>().FirstOrDefault();
+      if (box is not null)
+         SetCheckBox(box, item.IsCompleted);
+   }
+
+   private void SetCheckBox(CheckBox checkBox, bool completed)
+   {
+      if (checkBox.IsChecked == completed)
+         return;
+
+      _syncingCheck = true;
+      try
+      {
+         checkBox.IsChecked = completed;
+      }
+      finally
+      {
+         _syncingCheck = false;
+      }
+   }
+
+   private void NotifySubtasksRequired(ChecklistItem item)
+   {
+      var manualOpen = item.Subtasks.Any(subtask => !subtask.IsLink && !subtask.IsCompleted);
+      var message = manualOpen
+          ? "Complete the subtasks first to mark this as complete."
+          : "Complete the linked checklist first to mark this as complete.";
+      SubtasksRequired?.Invoke(this, message);
+   }
+
+   private void OpenLinkedSubtask_Click(object? sender, RoutedEventArgs e)
+   {
+      if (sender is not Button button || button.DataContext is not ChecklistSubtask subtask || !subtask.IsLink)
+         return;
+
+      if (FindOwnerItem(button) is ChecklistItem item)
+         SelectItem(item);
+
+      LinkedSubtaskOpenRequested?.Invoke(this, subtask);
+   }
+
+   private void LinkedSubtask_Loaded(object? sender, RoutedEventArgs e)
+   {
+      if (sender is not Button button || button.DataContext is not ChecklistSubtask subtask)
+         return;
+
+      if (subtask.IsCompleted)
+         button.Classes.Add("done");
+      else
+         button.Classes.Remove("done");
+   }
+
+   public void ApplyLinkedCompletion(Guid documentId, string? filePath, bool completed, string title)
+   {
+      var changed = false;
+      foreach (var item in _checklist)
+      {
+         var itemChanged = false;
+         foreach (var subtask in item.Subtasks ?? [])
+         {
+            if (!LinksTo(subtask, documentId, filePath))
+               continue;
+
+            if (!string.IsNullOrWhiteSpace(filePath) &&
+                !string.Equals(subtask.LinkedFilePath, filePath, StringComparison.OrdinalIgnoreCase))
+            {
+               subtask.LinkedFilePath = filePath;
+               itemChanged = true;
+            }
+
+            if (!string.IsNullOrWhiteSpace(title) && subtask.Title != title)
+            {
+               subtask.Title = title;
+               itemChanged = true;
+            }
+
+            if (subtask.IsCompleted != completed)
+            {
+               subtask.IsCompleted = completed;
+               itemChanged = true;
+            }
+         }
+
+         if (!itemChanged)
+            continue;
+
+         if (!item.CanComplete)
+            item.IsCompleted = false;
+
+         RefreshVisibleItem(item);
+         changed = true;
+      }
+
+      if (changed)
+         MarkEdited();
+   }
+
+   private static bool LinksTo(ChecklistSubtask subtask, Guid documentId, string? filePath)
+   {
+      if (!subtask.IsLink)
+         return false;
+
+      if (subtask.LinkedDocumentId is Guid id && id == documentId)
+         return true;
+
+      if (string.IsNullOrWhiteSpace(subtask.LinkedFilePath) || string.IsNullOrWhiteSpace(filePath))
+         return false;
+
+      try
+      {
+         return string.Equals(
+             Path.GetFullPath(subtask.LinkedFilePath),
+             Path.GetFullPath(filePath),
+             StringComparison.OrdinalIgnoreCase);
+      }
+      catch (Exception ex) when (ex is ArgumentException or NotSupportedException)
+      {
+         return false;
+      }
+   }
+
+   private static ChecklistItem? FindOwnerItem(Visual source)
+   {
+      for (var current = source; current is not null; current = current.GetVisualParent())
+      {
+         if (current is Border { DataContext: ChecklistItem item } border &&
+             border.Classes.Contains("check-item"))
+            return item;
+      }
+
+      return null;
+   }
+
+   private void CheckItem_Loaded(object? sender, RoutedEventArgs e)
+   {
+      if (sender is not Border border)
+         return;
+
+      border.Focusable = true;
+      border.FocusAdorner = null;
+      ApplySelection(border);
+      UpdateMoveButtons(border);
+
+      if (Equals(border.Tag, "shortcut-ready"))
+         return;
+
+      border.Tag = "shortcut-ready";
+      border.AddHandler(
+          PointerPressedEvent,
+          CheckItem_PointerPressed,
+          RoutingStrategies.Tunnel,
+          handledEventsToo: true);
+      border.AddHandler(
+          GotFocusEvent,
+          CheckItem_GotFocus,
+          RoutingStrategies.Bubble,
+          handledEventsToo: true);
+   }
+
+   private void CheckItem_PointerPressed(object? sender, PointerPressedEventArgs e)
+   {
+      if (sender is not Border border || border.DataContext is not ChecklistItem item)
+         return;
+
+      if (!e.GetCurrentPoint(border).Properties.IsLeftButtonPressed)
+         return;
+
+      SelectItem(item);
+      if (e.Source is Visual source && IsItemChrome(source, border))
+         return;
+
+      border.Focus();
+   }
+
+   private void CheckItem_GotFocus(object? sender, RoutedEventArgs e)
+   {
+      if (sender is Border { DataContext: ChecklistItem item })
+         SelectItem(item);
+   }
+
+   public void FocusSearch()
+   {
+      if (_checklist.Count == 0)
+         return;
+
+      if (!_filtersVisible)
+         SetFilterSectionVisible(true);
+
+      Dispatcher.UIThread.Post(() => SearchTextBox.Focus(), DispatcherPriority.Input);
+   }
+
+   private void ItemShortcutKeyDown(object? sender, KeyEventArgs e)
+   {
+      var firstPress = _itemKeysDown.Add(e.Key);
+      if (e.Handled)
+         return;
+
+      var shortcut = AppShortcuts.Match(e, ShortcutScope.Checklist);
+      if (shortcut is null || !CanRunItemShortcut(shortcut))
+         return;
+
+      if (_selectedItem is not { } item || !_visible.Contains(item))
+         return;
+
+      e.Handled = true;
+      if (!firstPress)
+         return;
+
+      if (shortcut.Id == AppShortcuts.EditItem)
+         EditItem(item);
+      else if (shortcut.Id == AppShortcuts.ToggleItem)
+         ToggleItem(item);
+   }
+
+   private void ItemShortcutKeyUp(object? sender, KeyEventArgs e) =>
+       _itemKeysDown.Remove(e.Key);
+
+   private bool CanRunItemShortcut(AppShortcut shortcut)
+   {
+      if (!IsEffectivelyVisible || _editOpen)
+         return false;
+
+      if (TopLevel.GetTopLevel(this)?.FocusManager?.GetFocusedElement() is not Visual focused)
+         return false;
+
+      if (!IsInside(focused, this))
+         return false;
+
+      for (var current = focused; current is not null; current = current.GetVisualParent())
+      {
+         if (current is TextBox or ComboBox or Avalonia.Controls.Calendar)
+            return false;
+
+         if (shortcut.Id == AppShortcuts.ToggleItem && current is Button or CheckBox)
+            return false;
+      }
+
+      return true;
+   }
+
+   private void SelectItem(ChecklistItem item)
+   {
+      _selectedItem = item;
+      foreach (var border in ChecklistItems.GetVisualDescendants().OfType<Border>())
+      {
+         if (border.Classes.Contains("check-item"))
+            ApplySelection(border);
+      }
+   }
+
+   private void ApplySelection(Border border)
+   {
+      if (border.DataContext == _selectedItem)
+         border.Classes.Add("selected");
+      else
+         border.Classes.Remove("selected");
+   }
+
+   private static bool IsItemChrome(Visual source, Border row)
+   {
+      for (var current = source; current is not null && current != row; current = current.GetVisualParent())
+      {
+         if (current is Button or CheckBox or TextBox)
+            return true;
+      }
+
+      return false;
+   }
+
+   private void ToggleItem(ChecklistItem item)
+   {
+      if (!item.IsCompleted && !item.CanComplete)
+      {
+         NotifySubtasksRequired(item);
+         return;
+      }
+
+      item.IsCompleted = !item.IsCompleted;
+      SyncParentCheckBox(item);
+
+      if (item.IsCompleted)
+         SuperDev.SuccessSound.PlayCheck();
+
+      MarkEdited();
+      if (item.IsCompleted)
+         _ = OfferChecklistCompletionAsync();
+   }
+
+   private async Task OfferChecklistCompletionAsync()
+   {
+      if (_documentCompleted || _completionOfferOpen || _editOpen)
+         return;
+
+      if (_checklist.Count == 0 || _checklist.Any(item => !item.IsCompleted))
+         return;
+
+      var owner = GetOwnerWindow();
+      if (owner is null)
+         return;
+
+      _completionOfferOpen = true;
+      try
+      {
+         var dialog = new StyledDialog(
+             "All checks completed",
+             "All check items are completed. Mark this checklist as completed?",
+             "Complete",
+             "Not now");
+         if (!await dialog.ShowDialog<bool>(owner))
+            return;
+
+         if (_documentCompleted || _checklist.Any(item => !item.IsCompleted))
+            return;
+
+         MarkChecklistCompleted();
+      }
+      finally
+      {
+         _completionOfferOpen = false;
+      }
+   }
+
+   private void MarkChecklistCompleted()
+   {
+      if (_documentCompleted)
+         return;
+
+      _documentCompleted = true;
+      DocumentCompleted?.Invoke(this, EventArgs.Empty);
+   }
+
+   private Border? FindItemBorder(ChecklistItem item)
+   {
+      foreach (var border in ChecklistItems.GetVisualDescendants().OfType<Border>())
+      {
+         if (border.Classes.Contains("check-item") && border.DataContext == item)
+            return border;
+      }
+
+      return null;
    }
 
    private void Save_Click(object? sender, RoutedEventArgs e) =>
        SaveRequested?.Invoke(this, EventArgs.Empty);
 
+   public void SetManualSaveVisible(bool visible) =>
+       SaveButton.IsVisible = visible;
+
    private void SaveAs_Click(object? sender, RoutedEventArgs e) =>
        SaveAsRequested?.Invoke(this, EventArgs.Empty);
+
+   public void SaveAsTemplate()
+   {
+      CommitDetails();
+      SaveAsTemplateRequested?.Invoke(this, EventArgs.Empty);
+   }
+
+   private void SaveAsTemplate_Click(object? sender, RoutedEventArgs e) =>
+       SaveAsTemplate();
 
    private void Copy_Click(object? sender, RoutedEventArgs e) =>
        CopyRequested?.Invoke(this, EventArgs.Empty);
@@ -332,8 +1096,24 @@ public partial class ChecklistView : UserControl
           Priority = item.Priority,
           Notes = item.Notes,
           Deadline = item.Deadline,
+          DeadlineMinute = item.DeadlineMinute,
+          NotifyBeforeMinutes = item.NotifyBeforeMinutes,
+          DeadlineSilent = item.DeadlineSilent,
+          Subtasks = CopySubtasks(item.Subtasks),
           IsCompleted = item.IsCompleted
        };
+
+   private static List<ChecklistSubtask> CopySubtasks(IEnumerable<ChecklistSubtask>? subtasks) =>
+       (subtasks ?? [])
+           .Select(subtask => new ChecklistSubtask
+           {
+              Id = Guid.NewGuid(),
+              Title = subtask.Title,
+              IsCompleted = subtask.IsCompleted,
+              LinkedDocumentId = subtask.LinkedDocumentId,
+              LinkedFilePath = subtask.LinkedFilePath
+           })
+           .ToList();
 
    private void MarkEdited()
    {
@@ -565,8 +1345,108 @@ public partial class ChecklistView : UserControl
    private void Search_TextChanged(object? sender, TextChangedEventArgs e) =>
        ApplyView();
 
-   private void View_Changed(object? sender, SelectionChangedEventArgs e) =>
-       ApplyView();
+   private void View_Changed(object? sender, SelectionChangedEventArgs e)
+   {
+      ApplyPriorityFilterColor();
+      ApplyView();
+   }
+
+   private void ApplyPriorityFilterColor()
+   {
+      PriorityFilterBox.Foreground = PriorityFilterBox.SelectedIndex switch
+      {
+         1 => PriorityAppearance.Critical,
+         2 => PriorityAppearance.Required,
+         3 => PriorityAppearance.Conditional,
+         4 => PriorityAppearance.Review,
+         _ => PriorityAppearance.Neutral
+      };
+   }
+
+   private void CategoryMeta_Loaded(object? sender, RoutedEventArgs e)
+   {
+      if (sender is not TextBlock text || text.DataContext is not ChecklistItem item)
+         return;
+
+      text.IsVisible = !string.IsNullOrWhiteSpace(item.Category);
+   }
+
+   private void DeadlineSeparator_Loaded(object? sender, RoutedEventArgs e)
+   {
+      if (sender is not TextBlock text || text.DataContext is not ChecklistItem item)
+         return;
+
+      text.IsVisible = item.Deadline is not null;
+   }
+
+   private void ItemDeadline_Loaded(object? sender, RoutedEventArgs e)
+   {
+      if (sender is not TextBlock text || text.DataContext is not ChecklistItem item)
+         return;
+
+      if (item.Deadline is not { } date)
+      {
+         text.IsVisible = false;
+         return;
+      }
+
+      ApplyItemDeadline(text, item);
+   }
+
+   public void RefreshDeadlineAppearance()
+   {
+      ApplyDeadlineLink(DeadlineButton, Deadline);
+      if (!_viewReady)
+         return;
+
+      foreach (var text in this.GetVisualDescendants().OfType<TextBlock>())
+      {
+         if (!text.Classes.Contains("item-deadline") || text.DataContext is not ChecklistItem item)
+            continue;
+
+         ApplyItemDeadline(text, item);
+      }
+   }
+
+   private static void ApplyItemDeadline(TextBlock text, ChecklistItem item)
+   {
+      if (item.Deadline is not { } date)
+      {
+         text.IsVisible = false;
+         SetLate(text, false);
+         return;
+      }
+
+      var label = $"Deadline - {DeadlineValue.Format(date, item.DeadlineMinute)}";
+      var notify = DeadlineValue.NotifyText(item.NotifyBeforeMinutes);
+      if (notify.Length > 0)
+         label = $"{label} · {notify}";
+      if (item.DeadlineSilent)
+         label = $"{label} · Silent";
+      text.Text = label;
+      text.IsVisible = true;
+      SetLate(text, DeadlineValue.IsPast(date, item.DeadlineMinute));
+   }
+
+   private static void SetLate(Control control, bool late)
+   {
+      if (late)
+         control.Classes.Add("late");
+      else
+         control.Classes.Remove("late");
+   }
+
+   private static void PriorityChip_Loaded(object? sender, RoutedEventArgs e)
+   {
+      if (sender is not Border chip || chip.DataContext is not ChecklistItem item)
+         return;
+
+      chip.Classes.Remove("critical");
+      chip.Classes.Remove("required");
+      chip.Classes.Remove("conditional");
+      chip.Classes.Remove("review");
+      chip.Classes.Add(PriorityAppearance.ClassName(item.Priority));
+   }
 
    /// <summary>
    /// Shows or hides the template line, repository, branch, and PR fields.
@@ -608,9 +1488,8 @@ public partial class ChecklistView : UserControl
    public void SetFilterSectionVisible(bool visible)
    {
       _filtersVisible = visible;
-      FiltersPanel.IsVisible = visible;
-      ChecklistBody.RowSpacing = visible ? 14 : 0;
       FilterToggleButton.Content = visible ? "Hide filters" : "Show filters";
+      UpdateItemActions();
 
       if (_viewReady)
          ApplyView();
@@ -642,8 +1521,10 @@ public partial class ChecklistView : UserControl
              entry.item.Title.Contains(search, StringComparison.OrdinalIgnoreCase) ||
              entry.item.Category.Contains(search, StringComparison.OrdinalIgnoreCase) ||
              entry.item.Notes.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+             (entry.item.Subtasks ?? []).Any(subtask =>
+                 subtask.Title.Contains(search, StringComparison.OrdinalIgnoreCase)) ||
              (entry.item.Deadline is { } deadline &&
-              DeadlineValue.Format(deadline).Contains(search, StringComparison.OrdinalIgnoreCase)));
+              DeadlineValue.Format(deadline, entry.item.DeadlineMinute).Contains(search, StringComparison.OrdinalIgnoreCase)));
       }
 
       matches = (StatusFilter)StatusFilterBox.SelectedIndex switch
@@ -680,6 +1561,9 @@ public partial class ChecklistView : UserControl
       if (visible.Count == _visible.Count && visible.SequenceEqual(_visible))
       {
          UpdateViewCount(visible.Count);
+         KeepSelectionVisible();
+         UpdateItemActions();
+         UpdateMoveButtons();
          return;
       }
 
@@ -687,7 +1571,62 @@ public partial class ChecklistView : UserControl
       foreach (var item in visible)
          _visible.Add(item);
 
+      KeepSelectionVisible();
       UpdateViewCount(visible.Count);
+      UpdateItemActions();
+      Dispatcher.UIThread.Post(UpdateMoveButtons, DispatcherPriority.Loaded);
+   }
+
+   private void UpdateMoveButtons()
+   {
+      foreach (var border in ChecklistItems.GetVisualDescendants().OfType<Border>())
+      {
+         if (border.Classes.Contains("check-item"))
+            UpdateMoveButtons(border);
+      }
+   }
+
+   private void UpdateMoveButtons(Border border)
+   {
+      if (border.DataContext is not ChecklistItem item)
+         return;
+
+      var index = _visible.IndexOf(item);
+      if (index < 0)
+         return;
+
+      foreach (var button in border.GetVisualDescendants().OfType<Button>())
+      {
+         if (!button.Classes.Contains("move"))
+            continue;
+
+         var moveUp = button.Content as string == "↑";
+         button.IsVisible = moveUp
+             ? index > 0
+             : index < _visible.Count - 1;
+      }
+   }
+
+   private void UpdateItemActions()
+   {
+      var hasItems = _checklist.Count > 0;
+      EmptyAddButton.IsVisible = !hasItems;
+      CopyButton.IsVisible = hasItems;
+      DeleteChecksButton.IsVisible = hasItems;
+      RearrangeButton.IsVisible = _checklist.Count > 1;
+      FilterToggleButton.IsVisible = hasItems;
+      CompleteButton.IsVisible = hasItems;
+      FiltersPanel.IsVisible = hasItems && _filtersVisible;
+      ChecklistBody.RowSpacing = FiltersPanel.IsVisible ? 14 : 0;
+
+      if (!hasItems)
+         CollapsedCountText.IsVisible = false;
+   }
+
+   private void KeepSelectionVisible()
+   {
+      if (_selectedItem is not null && !_visible.Contains(_selectedItem))
+         _selectedItem = null;
    }
 
    private void UpdateViewCount(int shown)
@@ -711,6 +1650,57 @@ public partial class ChecklistView : UserControl
        !string.IsNullOrWhiteSpace(SearchTextBox.Text) ||
        StatusFilterBox.SelectedIndex > 0 ||
        PriorityFilterBox.SelectedIndex > 0;
+
+   public void RearrangeChecks() =>
+       _ = RearrangeAsync();
+
+   private void Rearrange_Click(object? sender, RoutedEventArgs e) =>
+       RearrangeChecks();
+
+   private async Task RearrangeAsync()
+   {
+      if (_checklist.Count < 2)
+         return;
+
+      var owner = GetOwnerWindow();
+      if (owner is null)
+         return;
+
+      var dialog = new ReorderChecksWindow(_checklist.ToList());
+      var ordered = await dialog.ShowDialog<ChecklistItem[]?>(owner);
+      if (ordered is null)
+         return;
+
+      ApplyItemOrder(ordered);
+   }
+
+   private void ApplyItemOrder(IReadOnlyList<ChecklistItem> ordered)
+   {
+      if (ordered.Count != _checklist.Count)
+         return;
+
+      var changed = false;
+      for (var target = 0; target < ordered.Count; target++)
+      {
+         var from = _checklist.IndexOf(ordered[target]);
+         if (from < 0)
+            return;
+
+         if (from == target)
+            continue;
+
+         _checklist.Move(from, target);
+         changed = true;
+      }
+
+      if (!changed)
+         return;
+
+      if (SortBox.SelectedIndex != 0)
+         SortBox.SelectedIndex = 0;
+
+      MarkEdited();
+   }
 
    private void MoveUp_Click(object? sender, RoutedEventArgs e) =>
        MoveCheck(sender, -1);
@@ -737,6 +1727,7 @@ public partial class ChecklistView : UserControl
          return;
 
       _checklist.Move(from, to);
+      _visible.Move(visibleIndex, neighborIndex);
       MarkEdited();
    }
 
@@ -765,6 +1756,7 @@ public partial class ChecklistView : UserControl
          return;
 
       var dialog = new AddCheckWindow();
+      dialog.RequestLink = RequestLink;
       var result = await dialog.ShowDialog<ChecklistItem?>(owner);
 
       if (result is null)
@@ -789,31 +1781,55 @@ public partial class ChecklistView : UserControl
       await dialog.ShowDialog(owner);
    }
 
-   private async void EditCheck_Click(object? sender, RoutedEventArgs e)
+   private void EditCheck_Click(object? sender, RoutedEventArgs e)
    {
       if (sender is not Button button ||
           button.Tag is not ChecklistItem item)
+         return;
+
+      SelectItem(item);
+      EditItem(item);
+   }
+
+   private void EditItem(ChecklistItem item) =>
+       _ = EditItemAsync(item);
+
+   private async Task EditItemAsync(ChecklistItem item)
+   {
+      if (_editOpen || !_checklist.Contains(item))
          return;
 
       var owner = GetOwnerWindow();
       if (owner is null)
          return;
 
-      var dialog = new AddCheckWindow(item);
-      var result = await dialog.ShowDialog<ChecklistItem?>(owner);
+      _editOpen = true;
+      try
+      {
+         var dialog = new AddCheckWindow(item);
+         dialog.RequestLink = RequestLink;
+         var result = await dialog.ShowDialog<ChecklistItem?>(owner);
+         if (result is null)
+            return;
 
-      if (result is null)
-         return;
+         item.Title = result.Title;
+         item.Category = result.Category;
+         item.Priority = result.Priority;
+         item.Notes = result.Notes;
+         item.Deadline = result.Deadline;
+         item.DeadlineMinute = result.Deadline is null ? null : result.DeadlineMinute;
+         item.NotifyBeforeMinutes = result.Deadline is null ? null : result.NotifyBeforeMinutes;
+         item.DeadlineSilent = result.Deadline is not null && result.DeadlineSilent;
+         item.Subtasks = result.Subtasks;
+         item.IsCompleted = result.IsCompleted;
 
-      item.Title = result.Title;
-      item.Category = result.Category;
-      item.Priority = result.Priority;
-      item.Notes = result.Notes;
-      item.Deadline = result.Deadline;
-      item.IsCompleted = result.IsCompleted;
-
-      MarkEdited();
-      RefreshVisibleItem(item);
+         MarkEdited();
+         RefreshVisibleItem(item);
+      }
+      finally
+      {
+         _editOpen = false;
+      }
    }
 
    private async void RemoveCheck_Click(object? sender, RoutedEventArgs e)
@@ -847,6 +1863,9 @@ public partial class ChecklistView : UserControl
 
    public void DeleteChecks()
    {
+      if (_checklist.Count == 0)
+         return;
+
       _ = DeleteChecksAsync();
    }
 
@@ -915,7 +1934,7 @@ public partial class ChecklistView : UserControl
       }
 
       // The document flag is stored by the window. It is not written until Save.
-      DocumentCompleted?.Invoke(this, EventArgs.Empty);
+      MarkChecklistCompleted();
 
       var successDialog = new StyledDialog(
           "Checklist complete",

@@ -8,7 +8,7 @@ Pushing a version tag builds Super Dev and attaches three packages to one GitHub
 
 The tag you push is the version. `v1.2.0` produces a release titled `Super Dev v1.2.0`. GitHub release filenames cannot contain a space, so the download names use a dot: `Super.Dev-v1.2.0-win-x64.zip`. The app inside is still `Super Dev.exe` or `Super Dev.app`. The workflow does not create or move tags.
 
-These macOS builds are not signed or notarized. macOS Gatekeeper can warn that the app is from an unidentified developer.
+These macOS builds are ad-hoc signed so Apple Silicon can launch the bundle. They are not notarized. A download from GitHub is still blocked by Gatekeeper until the app is notarized. The Windows zip is not Authenticode signed, so SmartScreen warns that it is not safe.
 
 ## Create a release
 
@@ -35,9 +35,35 @@ Open the repository **Releases** page. The `v1.1.0` release lists the three asse
 
 **Windows.** Extract `Super.Dev-v1.1.0-win-x64.zip` and run `Super Dev.exe`.
 
+Windows SmartScreen says the app is not commonly downloaded and is not safe, because the executable is not Authenticode signed. Choose **More info**, then **Run anyway**. That warning stays on every new download until the exe is signed with a code-signing certificate that Windows trusts.
+
 **Mac.** Open the DMG for your Mac. Apple Silicon uses `osx-arm64`. Intel uses `osx-x64`. Drag **Super Dev** onto the **Applications** shortcut, then open Super Dev from Applications.
 
-If macOS says the app cannot be opened because it is from an unidentified developer, the build is unsigned. Open **System Settings → Privacy & Security** and allow Super Dev, or right-click the app, choose **Open**, and confirm. That warning is expected until the app is signed and notarized.
+Apple Silicon treats an unsigned app from a download as damaged, so the icon can show as broken after it is copied to Applications. The package script ad-hoc signs the app so the bundle itself is valid. A copy downloaded from GitHub is still quarantined, and macOS will keep calling it broken until the app is notarized with an Apple Developer ID.
+
+To open the copy already in Applications:
+
+```bash
+xattr -dr com.apple.quarantine "/Applications/Super Dev.app"
+codesign --force --deep --sign - "/Applications/Super Dev.app"
+open "/Applications/Super Dev.app"
+```
+
+## Signing
+
+Removing the Windows and Mac warnings requires paid certificates. Do not commit certificates or passwords. Store them as GitHub Actions secrets.
+
+**Windows.** An Authenticode certificate (an EV certificate clears SmartScreen immediately; a standard certificate does so after the file builds reputation). Sign `Super Dev.exe` before the zip is created.
+
+**Mac.** An Apple Developer ID Application certificate. Sign `Super Dev.app` with the hardened runtime, notarize it with `notarytool`, staple the ticket, then build the DMG from that signed app. The packaging script already ad-hoc signs the bundle before the DMG is created; replace that identity with the Developer ID when the certificate is available.
+
+Typical secrets:
+
+- `APPLE_CERTIFICATE_P12_BASE64`
+- `APPLE_CERTIFICATE_PASSWORD`
+- `APPLE_TEAM_ID`
+- `APPLE_ID`
+- `APPLE_APP_SPECIFIC_PASSWORD`
 
 ## When a tag already exists
 
@@ -53,17 +79,3 @@ git push origin v1.1.1
 ```
 
 Moving `v1.1.0` onto another commit rewrites a published tag. Do that only when you mean to, and only after anyone who already fetched the tag knows it will change.
-
-## Signing and notarization later
-
-The packaging script stops before any `codesign` or `notarytool` command. Add those steps after `Super Dev.app` is built and before the DMG is created. Store the credentials as GitHub Actions secrets. Do not commit certificates or passwords.
-
-Typical secrets:
-
-- `APPLE_CERTIFICATE_P12_BASE64`
-- `APPLE_CERTIFICATE_PASSWORD`
-- `APPLE_TEAM_ID`
-- `APPLE_ID`
-- `APPLE_APP_SPECIFIC_PASSWORD`
-
-Sign the `.app`, submit it to Apple notarization, staple the ticket, then build the DMG from that signed app.

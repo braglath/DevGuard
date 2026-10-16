@@ -224,6 +224,21 @@ public sealed class ChecklistFileService
 
             if (!Enum.IsDefined(item.Priority))
                 throw new ChecklistFileException("A checklist item has an unknown priority.");
+
+            item.Subtasks ??= [];
+            foreach (var subtask in item.Subtasks)
+            {
+                if (subtask is null || string.IsNullOrWhiteSpace(subtask.Title))
+                    throw new ChecklistFileException("A subtask is missing a title.");
+
+                if (subtask.Id == Guid.Empty)
+                    subtask.Id = Guid.NewGuid();
+
+                subtask.Title = subtask.Title.Trim();
+            }
+
+            if (!item.CanComplete)
+                item.IsCompleted = false;
         }
     }
 

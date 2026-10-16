@@ -2,8 +2,9 @@
 # Build a "Super Dev.app" bundle from a self-contained `dotnet publish` folder
 # and package it as a drag-to-Applications DMG.
 #
-# Native Avalonia libraries are copied next to the executable. This script does
-# not sign or notarize the app.
+# Native Avalonia libraries are copied next to the executable. Every Mach-O file
+# is ad-hoc signed so Apple Silicon can launch the bundle. A downloaded copy
+# still needs Apple notarization before Gatekeeper will open it without a warning.
 
 set -euo pipefail
 
@@ -167,6 +168,42 @@ cat > "$plist" <<EOF
   <string>NSApplication</string>
   <key>LSApplicationCategoryType</key>
   <string>public.app-category.developer-tools</string>
+  <key>CFBundleDocumentTypes</key>
+  <array>
+    <dict>
+      <key>CFBundleTypeName</key>
+      <string>Super Dev Checklist</string>
+      <key>CFBundleTypeRole</key>
+      <string>Editor</string>
+      <key>LSHandlerRank</key>
+      <string>Owner</string>
+      <key>LSItemContentTypes</key>
+      <array>
+        <string>com.superdev.checklist</string>
+      </array>
+    </dict>
+  </array>
+  <key>UTExportedTypeDeclarations</key>
+  <array>
+    <dict>
+      <key>UTTypeIdentifier</key>
+      <string>com.superdev.checklist</string>
+      <key>UTTypeDescription</key>
+      <string>Super Dev Checklist</string>
+      <key>UTTypeConformsTo</key>
+      <array>
+        <string>public.json</string>
+        <string>public.data</string>
+      </array>
+      <key>UTTypeTagSpecification</key>
+      <dict>
+        <key>public.filename-extension</key>
+        <array>
+          <string>superdev.json</string>
+        </array>
+      </dict>
+    </dict>
+  </array>
 </dict>
 </plist>
 EOF
@@ -192,8 +229,17 @@ if ! find "$macos_dir" -name 'libAvaloniaNative.dylib' -print -quit | grep -q .;
   die "App bundle is missing libAvaloniaNative.dylib"
 fi
 
-# Signing and notarization are intentionally skipped. Add them here, before the
-# disk image is created, once Apple credentials are available as CI secrets.
+# Apple Silicon rejects an unsigned app bundle and reports it as damaged.
+# Sign nested Mach-O files first, then the bundle. Ad-hoc identity "-" is valid
+# for the kernel; Gatekeeper still blocks a downloaded copy until it is notarized.
+xattr -cr "$app_bundle"
+while IFS= read -r -d '' candidate; do
+  if file -b "$candidate" | grep -q "Mach-O"; then
+    codesign --force --sign - "$candidate"
+  fi
+done < <(find "$macos_dir" -type f -print0)
+codesign --force --sign - "$app_bundle"
+codesign --verify --strict --verbose=2 "$app_bundle"
 
 app_kb="$(du -sk "$app_bundle" | awk '{print $1}')"
 size_kb="$((app_kb + app_kb / 5 + 32768))"

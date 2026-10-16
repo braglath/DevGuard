@@ -17,6 +17,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Platform\notify.m" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.1.3" />
     <PackageReference Include="Avalonia.Desktop" Version="12.1.3" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.1.3" />
@@ -27,4 +31,13 @@
     </PackageReference>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
   </ItemGroup>
+
+  <Target Name="CompileMacNotifier"
+          BeforeTargets="CoreCompile"
+          Condition="$([MSBuild]::IsOSPlatform('OSX'))"
+          Inputs="Platform/notify.m"
+          Outputs="$(OutputPath)libSuperDevNotify.dylib">
+    <MakeDir Directories="$(OutputPath)" />
+    <Exec Command="clang -dynamiclib -fobjc-arc -O2 -Wno-deprecated-declarations -o &quot;$(OutputPath)libSuperDevNotify.dylib&quot; &quot;Platform/notify.m&quot; -framework Foundation -framework AppKit -framework UserNotifications" />
+  </Target>
 </Project>

@@ -1,6 +1,8 @@
+using System;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
+using Avalonia.Platform.Storage;
 using SuperDev.ViewModels;
 using SuperDev.Views;
 
@@ -17,11 +19,36 @@ public partial class App : Application
     {
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.MainWindow = new MainWindow
+            var window = new MainWindow
             {
                 DataContext = new MainViewModel(),
             };
+            desktop.MainWindow = window;
+            if (desktop is IActivatableLifetime activatable)
+            {
+                activatable.Activated += (_, args) =>
+                {
+                    if (args is not FileActivatedEventArgs files)
+                        return;
+
+                    foreach (var file in files.Files)
+                    {
+                        var path = file.TryGetLocalPath();
+                        if (string.IsNullOrWhiteSpace(path))
+                            continue;
+
+                        Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                            window.OpenFromNotification(Guid.Empty, path));
+                    }
+                };
+            }
+
+            MacNotificationCenter.SetGuiHandler(request =>
+                Avalonia.Threading.Dispatcher.UIThread.Post(() =>
+                    window.OpenFromNotification(request.DocumentId, request.FilePath)));
+            MacNotificationCenter.EnsureReady();
             MacDockIcon.Apply();
+            SystemNotification.RegisterFileAssociation();
         }
 
         base.OnFrameworkInitializationCompleted();

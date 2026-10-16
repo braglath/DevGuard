@@ -11,8 +11,120 @@
         <local:ViewLocator />
     </Application.DataTemplates>
 
+    <Application.Resources>
+        <SolidColorBrush x:Key="CalendarViewForeground" Color="#F8FAFC"/>
+        <SolidColorBrush x:Key="CalendarViewBackground" Color="#0F172A"/>
+        <SolidColorBrush x:Key="CalendarViewBorderBrush" Color="#0F172A"/>
+        <SolidColorBrush x:Key="CalendarViewCalendarItemForeground" Color="#E2E8F0"/>
+        <SolidColorBrush x:Key="CalendarViewCalendarItemRevealBackground" Color="Transparent"/>
+        <SolidColorBrush x:Key="CalendarViewCalendarItemRevealBorderBrush" Color="Transparent"/>
+        <SolidColorBrush x:Key="CalendarViewHoverBorderBrush" Color="#334155"/>
+        <SolidColorBrush x:Key="CalendarViewPressedBorderBrush" Color="#3B82F6"/>
+        <SolidColorBrush x:Key="CalendarViewSelectedBorderBrush" Color="#2563EB"/>
+        <SolidColorBrush x:Key="CalendarViewSelectedHoverBorderBrush" Color="#3B82F6"/>
+        <SolidColorBrush x:Key="CalendarViewSelectedPressedBorderBrush" Color="#1D4ED8"/>
+        <SolidColorBrush x:Key="CalendarViewTodayForeground" Color="#FFFFFF"/>
+        <SolidColorBrush x:Key="CalendarViewOutOfScopeBackground" Color="Transparent"/>
+        <SolidColorBrush x:Key="CalendarViewOutOfScopeForeground" Color="#475569"/>
+        <SolidColorBrush x:Key="CalendarViewBlackoutForeground" Color="#475569"/>
+        <SolidColorBrush x:Key="CalendarViewWeekDayForegroundDisabled" Color="#475569"/>
+        <SolidColorBrush x:Key="CalendarViewNavigationButtonBackground" Color="Transparent"/>
+        <SolidColorBrush x:Key="CalendarViewNavigationButtonBorderBrush" Color="Transparent"/>
+        <SolidColorBrush x:Key="CalendarViewNavigationButtonBorderBrushPointerOver" Color="#1E293B"/>
+        <SolidColorBrush x:Key="CalendarViewNavigationButtonForegroundPointerOver" Color="#F8FAFC"/>
+        <SolidColorBrush x:Key="CalendarViewNavigationButtonForegroundPressed" Color="#93C5FD"/>
+        <x:Double x:Key="CalendarFontSize">13</x:Double>
+        <x:Double x:Key="CalendarDayButtonFontSize">13</x:Double>
+    </Application.Resources>
+
     <Application.Styles>
         <FluentTheme />
+
+        <Style Selector="FlyoutPresenter.app-popup">
+            <Setter Property="Background" Value="#0F172A"/>
+            <Setter Property="BorderBrush" Value="#334155"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="12"/>
+            <Setter Property="Padding" Value="12"/>
+        </Style>
+
+        <Style Selector="Calendar">
+            <Setter Property="Background" Value="#0F172A"/>
+            <Setter Property="Foreground" Value="#F8FAFC"/>
+            <Setter Property="BorderBrush" Value="#0F172A"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton /template/ Border#Root">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton /template/ Border#Border">
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton:pointerover /template/ Border#Root">
+            <Setter Property="Background" Value="#1E293B"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton:pointerover /template/ Border#Border">
+            <Setter Property="BorderBrush" Value="#334155"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton:today:not(:selected) /template/ Border#Root">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton:today:not(:selected) /template/ Border#Border">
+            <Setter Property="BorderBrush" Value="#60A5FA"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton:today:not(:selected) /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="#93C5FD"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton:selected /template/ Border#Root">
+            <Setter Property="Background" Value="#2563EB"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton:selected /template/ Border#Border">
+            <Setter Property="BorderBrush" Value="#2563EB"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton:inactive /template/ Border#Root">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+
+        <Style Selector="CalendarDayButton:inactive /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="#475569"/>
+        </Style>
+
+        <Style Selector="CalendarButton:selected /template/ Border#Root">
+            <Setter Property="Background" Value="#2563EB"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+
+        <Style Selector="CalendarButton:selected /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="White"/>
+        </Style>
+
+        <Style Selector="CalendarButton:pointerover /template/ Border#Root">
+            <Setter Property="Background" Value="#1E293B"/>
+            <Setter Property="CornerRadius" Value="8"/>
+        </Style>
+
+        <Style Selector="CalendarButton /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Foreground" Value="#E2E8F0"/>
+        </Style>
 
         <Style Selector="Button.clear-text">
             <Setter Property="Width" Value="28"/>
